@@ -1,0 +1,17 @@
+name: WakeMeUp
+version: "0.1.0"
+slug: wakemeup
+description: Alarm app for Home Assistant that emits the wakemeup_alarm_triggered event
+startup: application
+arch:
+  - amd64
+  - aarch64
+  - armv7
+ingress: true
+ingress_port: 8080
+panel_icon: mdi:alarm
+panel_title: WakeMeUp
+homeassistant_api: true
+init: false
+options: {}
+schema: {}

@@ -1,0 +1,50 @@
+<aside class="sidebar-shell">
+    <div class="sidebar-mobile-bar">
+        <div class="brand-block">
+            <div class="brand-mark">WU</div>
+            <div>
+                <p class="brand-title">WakeMeUp</p>
+                <p class="brand-copy">Alarms</p>
+            </div>
+        </div>
+
+        <button class="menu-toggle" type="button" @onclick="ToggleMenu" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+
+    <div class="sidebar-panel @(isMenuOpen ? "is-open" : string.Empty)">
+        <div class="brand-block sidebar-brand-desktop">
+            <div class="brand-mark">WU</div>
+            <div>
+                <p class="brand-title">WakeMeUp</p>
+                <p class="brand-copy">Alarms</p>
+            </div>
+        </div>
+
+        <nav class="nav flex-column nav-pills gap-2">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="CloseMenu">
+                Alarm overview
+            </NavLink>
+            <NavLink class="nav-link" href="settings" @onclick="CloseMenu">
+                Settings
+            </NavLink>
+        </nav>
+    </div>
+</aside>
+
+@code {
+    private bool isMenuOpen;
+
+    private void ToggleMenu()
+    {
+        isMenuOpen = !isMenuOpen;
+    }
+
+    private void CloseMenu()
+    {
+        isMenuOpen = false;
+    }
+}

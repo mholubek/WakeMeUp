@@ -1,0 +1,87 @@
+@page "/settings"
+@inject IAlarmStore Store
+@inject IJSRuntime JS
+
+<PageTitle>Settings</PageTitle>
+
+<div class="panel-card panel-card-wide">
+    <div class="section-heading">
+        <p class="section-kicker">Settings</p>
+    </div>
+
+    <EditForm Model="settings" OnValidSubmit="SaveSettingsAsync" FormName="app-settings" class="stack-form">
+        <DataAnnotationsValidator />
+
+        <div>
+            <label class="form-label">Theme</label>
+            <InputSelect class="form-select" @bind-Value="settings.ThemeMode">
+                @foreach (var mode in Enum.GetValues<ThemeMode>())
+                {
+                    <option value="@mode">@GetThemeModeName(mode)</option>
+                }
+            </InputSelect>
+            <div class="form-text">Auto mode follows the Home Assistant theme when available and falls back to the device theme.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save settings</button>
+    </EditForm>
+
+    <div class="status-callout mt-4">
+        <p>@TimeZoneInfo.Local.DisplayName</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(statusMessage))
+{
+    <div class="toast-banner @(isError ? "toast-banner-error" : "toast-banner-success")">
+        @statusMessage
+    </div>
+}
+
+@code {
+    private AppSettings settings = new();
+    private bool isError;
+    private bool themeSyncPending;
+    private string statusMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        settings = await Store.GetSettingsAsync();
+        themeSyncPending = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!themeSyncPending)
+        {
+            return;
+        }
+
+        themeSyncPending = false;
+        await ApplyThemeAsync();
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        await Store.SaveSettingsAsync(settings);
+        await ApplyThemeAsync();
+        statusMessage = "Settings saved.";
+        isError = false;
+    }
+
+    private async Task ApplyThemeAsync()
+    {
+        await JS.InvokeVoidAsync("wakeMeUpTheme.apply", settings.ThemeMode.ToString());
+    }
+
+    private static string GetThemeModeName(ThemeMode mode)
+    {
+        return mode switch
+        {
+            ThemeMode.Auto => "Automatic",
+            ThemeMode.Light => "Light",
+            ThemeMode.Dark => "Dark",
+            _ => mode.ToString()
+        };
+    }
+}

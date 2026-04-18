@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+.dotnet/
+App_Data/
+*.user
+*.suo
+*.cache

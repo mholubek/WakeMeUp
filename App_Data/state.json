@@ -1,0 +1,37 @@
+{
+  "alarms": [
+    {
+      "id": "15c00e8d-c05c-433e-86d8-d6c2313c6345",
+      "name": "Pracovne rano",
+      "description": "Ukazkovy budik na pracovny tyzden",
+      "time": "06:30:00",
+      "isEnabled": true,
+      "repeatMode": 2,
+      "days": 31,
+      "createdUtc": "2026-04-18T18:43:46.9037796+00:00",
+      "lastProcessedOccurrenceUtc": null,
+      "lastTriggeredUtc": null,
+      "lastResultMessage": ""
+    },
+    {
+      "id": "d4c86989-1d2b-483e-b4c4-71f2dab5bdc2",
+      "name": "Novy budik",
+      "description": "",
+      "time": "07:00:00",
+      "isEnabled": true,
+      "repeatMode": 4,
+      "days": 71,
+      "createdUtc": "2026-04-18T19:11:57.165475+00:00",
+      "lastProcessedOccurrenceUtc": null,
+      "lastTriggeredUtc": null,
+      "lastResultMessage": ""
+    }
+  ],
+  "settings": {
+    "themeMode": 0,
+    "homeAssistantBaseUrl": "http://supervisor/core",
+    "accessToken": "",
+    "publishEnabled": true,
+    "useHomeAssistantThemeWhenAvailable": false
+  }
+}

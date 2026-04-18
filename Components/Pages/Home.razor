@@ -1,0 +1,412 @@
+@page "/"
+@inject IAlarmStore Store
+@inject AlarmOccurrenceService OccurrenceService
+@inject IJSRuntime JS
+
+<PageTitle>WakeMeUp</PageTitle>
+
+<div class="dashboard-grid">
+    <section class="panel-card panel-card-wide">
+        <div class="section-heading">
+            <div>
+                <p class="section-kicker">Alarms</p>
+                <h2>Alarm overview</h2>
+            </div>
+            <button class="btn btn-primary" @onclick="StartCreate">New alarm</button>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="empty-state">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p>Loading saved alarms...</p>
+            </div>
+        }
+        else if (alarms.Count == 0)
+        {
+            <div class="empty-state">
+                <h3>No alarms yet</h3>
+                <p>Create your first alarm and set a time and repeat rule.</p>
+            </div>
+        }
+        else
+        {
+            <div class="alarm-list">
+                @foreach (var alarm in alarms)
+                {
+                    var nextOccurrence = OccurrenceService.GetNextOccurrence(alarm, DateTimeOffset.Now);
+                    <article class="alarm-card">
+                        <div class="alarm-main">
+                            <div class="alarm-time">@alarm.Time.ToString("HH\\:mm")</div>
+                            <div>
+                                <div class="alarm-title-row">
+                                    <h3>@alarm.Name</h3>
+                                    <span class="badge text-bg-secondary">@GetRepeatLabel(alarm)</span>
+                                    @if (alarm.IsEnabled)
+                                    {
+                                        <span class="badge text-bg-success">Enabled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-dark">Disabled</span>
+                                    }
+                                </div>
+                                <p class="alarm-description">@(string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description)</p>
+                                <div class="alarm-meta">
+                                    <span>Next trigger: @FormatOccurrence(nextOccurrence)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alarm-actions">
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="() => EditAlarm(alarm)">Edit</button>
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleAlarm(alarm)">
+                                @(alarm.IsEnabled ? "Disable" : "Enable")
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteAlarm(alarm.Id)">Delete</button>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@if (isEditorOpen)
+{
+    <div class="modal-backdrop fade show"></div>
+    <div class="editor-modal-wrap" @onclick="HandleBackdropClick">
+        <section class="editor-modal panel-card"
+                 tabindex="0"
+                 @ref="editorModalRef"
+                 @onclick:stopPropagation="true"
+                 @onkeydown="HandleModalKeyDown">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Editor</p>
+                    <h2>@(editor.IsEditMode ? "Edit alarm" : "New alarm")</h2>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="CloseEditor">Close</button>
+            </div>
+
+            <EditForm Model="editor" OnValidSubmit="SaveAlarmAsync" FormName="alarm-editor" class="stack-form">
+                <DataAnnotationsValidator />
+
+                <div>
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="editor.Name" />
+                    <ValidationMessage For="@(() => editor.Name)" />
+                </div>
+
+                <div>
+                    <label class="form-label">Time</label>
+                    <InputText class="form-control" type="time" @bind-Value="editor.TimeText" />
+                    <ValidationMessage For="@(() => editor.TimeText)" />
+                </div>
+
+                <div>
+                    <label class="form-label">Repeat</label>
+                    <InputSelect class="form-select" @bind-Value="editor.RepeatMode">
+                        @foreach (var mode in Enum.GetValues<RepeatMode>())
+                        {
+                            <option value="@mode">@GetRepeatModeName(mode)</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                @if (editor.RepeatMode == RepeatMode.CustomDays)
+                {
+                    <div>
+                        <label class="form-label">Choose days</label>
+                        <div class="weekday-grid">
+                            @foreach (var day in weekdays)
+                            {
+                                <label class="weekday-pill">
+                                    <input type="checkbox"
+                                           checked="@editor.Days.HasFlag(day.Flag)"
+                                           @onchange="args => ToggleEditorDay(day.Flag, args.Value is true)" />
+                                    <span>@day.ShortName</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div>
+                    <label class="form-label">Note</label>
+                    <InputTextArea class="form-control" rows="3" @bind-Value="editor.Description" />
+                </div>
+
+                <div class="form-check form-switch">
+                    <InputCheckbox class="form-check-input" @bind-Value="editor.IsEnabled" />
+                    <label class="form-check-label">Alarm is enabled</label>
+                </div>
+
+                <div class="editor-actions">
+                    <button type="submit" class="btn btn-primary">Save alarm</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="ResetEditor">Clear form</button>
+                </div>
+            </EditForm>
+        </section>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(statusMessage))
+{
+    <div class="toast-banner @(isError ? "toast-banner-error" : "toast-banner-success")">
+        @statusMessage
+    </div>
+}
+
+@code {
+    private static readonly (WeekdaySelection Flag, string ShortName)[] weekdays =
+    [
+        (WeekdaySelection.Monday, "Mon"),
+        (WeekdaySelection.Tuesday, "Tue"),
+        (WeekdaySelection.Wednesday, "Wed"),
+        (WeekdaySelection.Thursday, "Thu"),
+        (WeekdaySelection.Friday, "Fri"),
+        (WeekdaySelection.Saturday, "Sat"),
+        (WeekdaySelection.Sunday, "Sun")
+    ];
+
+    private readonly AlarmEditorModel editor = new();
+    private List<AlarmDefinition> alarms = [];
+    private bool isLoading = true;
+    private bool isError;
+    private bool isEditorOpen;
+    private bool focusEditorPending;
+    private ElementReference editorModalRef;
+    private string statusMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusEditorPending)
+        {
+            return;
+        }
+
+        focusEditorPending = false;
+        await JS.InvokeVoidAsync("wakeMeUpUi.focusElement", editorModalRef);
+    }
+
+    private async Task LoadAsync()
+    {
+        isLoading = true;
+        alarms = (await Store.GetAlarmsAsync()).OrderBy(x => x.Time).ToList();
+        isLoading = false;
+    }
+
+    private void StartCreate()
+    {
+        ResetEditor();
+        editor.Name = $"Alarm {alarms.Count + 1}";
+        isEditorOpen = true;
+        focusEditorPending = true;
+    }
+
+    private void EditAlarm(AlarmDefinition alarm)
+    {
+        editor.Load(alarm);
+        isEditorOpen = true;
+        focusEditorPending = true;
+    }
+
+    private async Task ToggleAlarm(AlarmDefinition alarm)
+    {
+        alarm.IsEnabled = !alarm.IsEnabled;
+        await Store.SaveAlarmAsync(alarm);
+        statusMessage = alarm.IsEnabled ? "Alarm enabled." : "Alarm disabled.";
+        isError = false;
+        await LoadAsync();
+    }
+
+    private async Task DeleteAlarm(Guid alarmId)
+    {
+        await Store.DeleteAlarmAsync(alarmId);
+        statusMessage = "Alarm deleted.";
+        isError = false;
+        if (editor.Id == alarmId)
+        {
+            CloseEditor();
+        }
+        await LoadAsync();
+    }
+
+    private async Task SaveAlarmAsync()
+    {
+        if (!editor.TryBuild(out var alarm, out var validationError))
+        {
+            statusMessage = validationError;
+            isError = true;
+            return;
+        }
+
+        await Store.SaveAlarmAsync(alarm);
+        statusMessage = editor.IsEditMode ? "Alarm updated." : "Alarm created.";
+        isError = false;
+        CloseEditor();
+        await LoadAsync();
+    }
+
+    private void ToggleEditorDay(WeekdaySelection day, bool enabled)
+    {
+        if (enabled)
+        {
+            editor.Days |= day;
+        }
+        else
+        {
+            editor.Days &= ~day;
+        }
+    }
+
+    private void ResetEditor()
+    {
+        editor.Reset();
+    }
+
+    private void CloseEditor()
+    {
+        ResetEditor();
+        isEditorOpen = false;
+    }
+
+    private void HandleBackdropClick()
+    {
+        CloseEditor();
+    }
+
+    private void HandleModalKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            CloseEditor();
+        }
+    }
+
+    private static string GetRepeatModeName(RepeatMode mode)
+    {
+        return mode switch
+        {
+            RepeatMode.Never => "Never",
+            RepeatMode.Daily => "Daily",
+            RepeatMode.Weekdays => "Weekdays",
+            RepeatMode.Weekends => "Weekends",
+            RepeatMode.CustomDays => "Custom days",
+            _ => mode.ToString()
+        };
+    }
+
+    private static string GetRepeatLabel(AlarmDefinition alarm)
+    {
+        return alarm.RepeatMode switch
+        {
+            RepeatMode.CustomDays when alarm.Days != WeekdaySelection.None => string.Join(", ", weekdays.Where(x => alarm.Days.HasFlag(x.Flag)).Select(x => x.ShortName)),
+            _ => GetRepeatModeName(alarm.RepeatMode)
+        };
+    }
+
+    private static string FormatOccurrence(DateTimeOffset? occurrence)
+    {
+        return occurrence.HasValue
+            ? occurrence.Value.LocalDateTime.ToString("ddd MM/dd HH:mm")
+            : "Not scheduled";
+    }
+
+    private sealed class AlarmEditorModel
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(80)]
+        public string Name { get; set; } = "New alarm";
+
+        [Required(ErrorMessage = "Time is required.")]
+        public string TimeText { get; set; } = "07:00";
+
+        [StringLength(160)]
+        public string Description { get; set; } = string.Empty;
+
+        public bool IsEnabled { get; set; } = true;
+        public RepeatMode RepeatMode { get; set; } = RepeatMode.Never;
+        public WeekdaySelection Days { get; set; } = WeekdaySelection.None;
+        public bool IsEditMode { get; set; }
+        public DateTimeOffset? LastProcessedOccurrenceUtc { get; set; }
+        public DateTimeOffset? LastTriggeredUtc { get; set; }
+        public string LastResultMessage { get; set; } = string.Empty;
+        public DateTimeOffset CreatedUtc { get; set; } = DateTimeOffset.UtcNow;
+
+        public void Load(AlarmDefinition alarm)
+        {
+            Id = alarm.Id;
+            Name = alarm.Name;
+            TimeText = alarm.Time.ToString("HH\\:mm");
+            Description = alarm.Description;
+            IsEnabled = alarm.IsEnabled;
+            RepeatMode = alarm.RepeatMode;
+            Days = alarm.Days;
+            IsEditMode = true;
+            LastProcessedOccurrenceUtc = alarm.LastProcessedOccurrenceUtc;
+            LastTriggeredUtc = alarm.LastTriggeredUtc;
+            LastResultMessage = alarm.LastResultMessage;
+            CreatedUtc = alarm.CreatedUtc;
+        }
+
+        public void Reset()
+        {
+            Id = Guid.NewGuid();
+            Name = "New alarm";
+            TimeText = "07:00";
+            Description = string.Empty;
+            IsEnabled = true;
+            RepeatMode = RepeatMode.Never;
+            Days = WeekdaySelection.None;
+            IsEditMode = false;
+            LastProcessedOccurrenceUtc = null;
+            LastTriggeredUtc = null;
+            LastResultMessage = string.Empty;
+            CreatedUtc = DateTimeOffset.UtcNow;
+        }
+
+        public bool TryBuild(out AlarmDefinition alarm, out string validationError)
+        {
+            validationError = string.Empty;
+            alarm = new AlarmDefinition();
+
+            if (!TimeOnly.TryParse(TimeText, out var time))
+            {
+                validationError = "Time must use the HH:mm format.";
+                return false;
+            }
+
+            if (RepeatMode == RepeatMode.CustomDays && Days == WeekdaySelection.None)
+            {
+                validationError = "Select at least one day for a custom repeat rule.";
+                return false;
+            }
+
+            alarm = new AlarmDefinition
+            {
+                Id = Id,
+                Name = Name.Trim(),
+                Description = Description.Trim(),
+                Time = time,
+                IsEnabled = IsEnabled,
+                RepeatMode = RepeatMode,
+                Days = Days,
+                CreatedUtc = CreatedUtc,
+                LastProcessedOccurrenceUtc = LastProcessedOccurrenceUtc,
+                LastTriggeredUtc = LastTriggeredUtc,
+                LastResultMessage = LastResultMessage
+            };
+
+            return true;
+        }
+    }
+}
