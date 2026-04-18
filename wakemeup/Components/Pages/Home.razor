@@ -70,7 +70,7 @@
                                         <span class="badge text-bg-dark">Disabled</span>
                                     }
                                 </div>
-                                <p class="alarm-description">@(string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description)</p>
+                                <p class="alarm-description">@alarm.Description</p>
                                 <div class="alarm-meta">
                                     <span>Next trigger: @FormatOccurrence(nextOccurrence)</span>
                                 </div>
@@ -249,7 +249,8 @@
 
             await Store.SaveAlarmAsync(alarm);
             Logger.LogInformation(
-                "Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
+                "[{LoggedAt}] Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
+                GetLogTimestamp(),
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description),
@@ -262,7 +263,8 @@
         {
             Logger.LogError(
                 exception,
-                "Error updating alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                "[{LoggedAt}] Error updating alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                GetLogTimestamp(),
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description));
@@ -281,7 +283,8 @@
             if (alarm is not null)
             {
                 Logger.LogInformation(
-                    "Alarm deleted: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                    "[{LoggedAt}] Alarm deleted: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                    GetLogTimestamp(),
                     alarm.Name,
                     alarm.Time.ToString("HH\\:mm"),
                     GetLogDescription(alarm.Description));
@@ -299,7 +302,8 @@
         {
             Logger.LogError(
                 exception,
-                "Error deleting alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                "[{LoggedAt}] Error deleting alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                GetLogTimestamp(),
                 alarm?.Name ?? "Unknown",
                 alarm?.Time.ToString("HH\\:mm") ?? "Unknown",
                 GetLogDescription(alarm?.Description));
@@ -321,7 +325,8 @@
         {
             await Store.SaveAlarmAsync(alarm);
             Logger.LogInformation(
-                "Alarm set: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                "[{LoggedAt}] Alarm set: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                GetLogTimestamp(),
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description));
@@ -334,7 +339,8 @@
         {
             Logger.LogError(
                 exception,
-                "Error saving alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                "[{LoggedAt}] Error saving alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                GetLogTimestamp(),
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description));
@@ -410,7 +416,12 @@
 
     private static string GetLogDescription(string? description)
     {
-        return string.IsNullOrWhiteSpace(description) ? "No notes." : description.Trim();
+        return description?.Trim() ?? string.Empty;
+    }
+
+    private static string GetLogTimestamp()
+    {
+        return DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz");
     }
 
     private sealed class AlarmEditorModel

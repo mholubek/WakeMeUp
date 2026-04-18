@@ -46,19 +46,21 @@ public sealed class HomeAssistantEventPublisher(
         if (response.IsSuccessStatusCode)
         {
             logger.LogInformation(
-                "Alarm triggered: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                "[{LoggedAt}] Alarm triggered: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                GetLogTimestamp(),
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
-                string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim());
+                GetLogDescription(alarm.Description));
             return (true, $"Event {AlarmTriggeredEventType} sent.");
         }
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         logger.LogError(
-            "Error triggering alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', StatusCode={StatusCode}, Body='{ResponseBody}'",
+            "[{LoggedAt}] Error triggering alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', StatusCode={StatusCode}, Body='{ResponseBody}'",
+            GetLogTimestamp(),
             alarm.Name,
             alarm.Time.ToString("HH\\:mm"),
-            string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim(),
+            GetLogDescription(alarm.Description),
             (int)response.StatusCode,
             body);
         return (false, $"Home Assistant returned {(int)response.StatusCode}.");
@@ -67,5 +69,15 @@ public sealed class HomeAssistantEventPublisher(
     private static string AppendTrailingSlash(string value)
     {
         return value.EndsWith("/", StringComparison.Ordinal) ? value : $"{value}/";
+    }
+
+    private static string GetLogDescription(string? description)
+    {
+        return description?.Trim() ?? string.Empty;
+    }
+
+    private static string GetLogTimestamp()
+    {
+        return DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz");
     }
 }

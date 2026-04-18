@@ -61,10 +61,11 @@ public sealed class AlarmScheduler(
             if (!success)
             {
                 logger.LogError(
-                    "Error processing alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Result='{Result}'",
+                    "[{LoggedAt}] Error processing alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Result='{Result}'",
+                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz"),
                     alarm.Name,
                     alarm.Time.ToString("HH\\:mm"),
-                    string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim(),
+                    alarm.Description?.Trim() ?? string.Empty,
                     message);
             }
         }

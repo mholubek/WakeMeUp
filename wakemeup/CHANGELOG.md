@@ -1,8 +1,13 @@
 # Changelog
 
+## 0.1.5
+
+- Removed the remaining fallback text for blank alarm descriptions from the UI and custom logs
+- Added explicit timestamps to custom WakeMeUp alarm logs
+
 ## 0.1.4
 
-- Sent an empty string instead of `No notes.` when an alarm description is blank
+- Sent an empty string when an alarm description is blank
 - Fixed one-time alarms so re-enabling them resets their processed state and allows them to trigger again
 
 ## 0.1.3
