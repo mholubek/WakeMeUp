@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Sent an empty string instead of `No notes.` when an alarm description is blank
+- Fixed one-time alarms so re-enabling them resets their processed state and allows them to trigger again
+
 ## 0.1.3
 
 - Added direct alarm enable and disable switches to the overview cards with desktop and mobile specific placement

@@ -34,7 +34,7 @@ public sealed class HomeAssistantEventPublisher(
         {
             name = alarm.Name,
             time = alarm.Time.ToString("HH\\:mm"),
-            description = string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim()
+            description = alarm.Description.Trim()
         };
 
         var client = httpClientFactory.CreateClient(nameof(HomeAssistantEventPublisher));

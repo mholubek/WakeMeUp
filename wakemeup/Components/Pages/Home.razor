@@ -237,7 +237,16 @@
     {
         try
         {
+            var wasEnabled = alarm.IsEnabled;
             alarm.IsEnabled = isEnabled;
+
+            if (!wasEnabled && isEnabled && alarm.RepeatMode == RepeatMode.Never)
+            {
+                alarm.LastProcessedOccurrenceUtc = null;
+                alarm.LastTriggeredUtc = null;
+                alarm.LastResultMessage = string.Empty;
+            }
+
             await Store.SaveAlarmAsync(alarm);
             Logger.LogInformation(
                 "Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",

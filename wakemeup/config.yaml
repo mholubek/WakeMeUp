@@ -1,5 +1,5 @@
 name: WakeMeUp
-version: "0.1.3"
+version: "0.1.4"
 slug: wakemeup
 description: Alarm app for Home Assistant that emits the wakemeup_alarm_triggered event
 startup: application
