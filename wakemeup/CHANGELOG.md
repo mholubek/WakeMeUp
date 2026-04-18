@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Persisted ASP.NET Data Protection keys in the add-on data directory to avoid antiforgery token issues after restarts
+- Disabled HTTPS redirection inside the Home Assistant add-on environment to remove ingress-related warnings
+
 ## 0.1.1
 
 - Fixed Home Assistant ingress asset loading so styles and interactivity work correctly in the add-on UI

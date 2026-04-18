@@ -1,13 +1,21 @@
+using Microsoft.AspNetCore.DataProtection;
 using WakeMeUp.Components;
 using WakeMeUp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var isHomeAssistantAddon = Directory.Exists("/data");
+var dataProtectionDirectory = isHomeAssistantAddon
+    ? "/data/.aspnet/DataProtection-Keys"
+    : Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtection-Keys");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionDirectory))
+    .SetApplicationName("WakeMeUp");
 builder.Services.AddSingleton<IAlarmStore, SqliteAlarmStore>();
 builder.Services.AddSingleton<AlarmOccurrenceService>();
 builder.Services.AddSingleton<HomeAssistantEventPublisher>();
@@ -37,7 +45,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found");
-app.UseHttpsRedirection();
+
+if (!isHomeAssistantAddon)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseAntiforgery();
 
 app.MapGet("/health", () => Results.Ok(new
