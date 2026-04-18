@@ -7,12 +7,28 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IAlarmStore, SqliteAlarmStore>();
 builder.Services.AddSingleton<AlarmOccurrenceService>();
 builder.Services.AddSingleton<HomeAssistantEventPublisher>();
 builder.Services.AddHostedService<AlarmScheduler>();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.TryGetValue("X-Ingress-Path", out var ingressPath))
+    {
+        var pathBase = ingressPath.ToString().TrimEnd('/');
+
+        if (!string.IsNullOrWhiteSpace(pathBase))
+        {
+            context.Request.PathBase = pathBase;
+        }
+    }
+
+    await next();
+});
 
 if (!app.Environment.IsDevelopment())
 {
