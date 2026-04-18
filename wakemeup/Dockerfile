@@ -1,12 +1,12 @@
 ARG BUILD_VERSION="dev"
 ARG BUILD_ARCH
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet publish WakeMeUp.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 ARG BUILD_VERSION
 ARG BUILD_ARCH
 LABEL \
