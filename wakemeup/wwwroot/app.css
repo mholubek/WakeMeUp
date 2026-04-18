@@ -242,6 +242,7 @@ a,
 .alarm-main {
     display: flex;
     gap: 1rem;
+    align-items: flex-start;
 }
 
 .alarm-time {
@@ -249,6 +250,18 @@ a,
     font-size: clamp(2rem, 4vw, 3rem);
     line-height: 1;
     font-weight: 700;
+}
+
+.alarm-time-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    align-items: flex-start;
+}
+
+.alarm-content {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .alarm-title-row,
@@ -259,6 +272,36 @@ a,
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem 0.9rem;
+}
+
+.alarm-title-row h3 {
+    overflow-wrap: anywhere;
+}
+
+.alarm-inline-toggle {
+    display: none;
+}
+
+.alarm-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--wm-border);
+    border-radius: 1rem;
+    background: var(--wm-surface-strong);
+}
+
+.alarm-switch .form-check-input {
+    float: none;
+    margin: 0;
+}
+
+.alarm-switch .form-check-label {
+    margin: 0;
+    color: var(--wm-text);
+    font-weight: 600;
 }
 
 .alarm-meta span,
@@ -278,6 +321,7 @@ a,
     gap: 0.6rem;
     min-width: 0;
     align-items: center;
+    justify-content: flex-end;
 }
 
 .alarm-actions .btn {
@@ -476,8 +520,29 @@ a,
         flex-direction: column;
     }
 
+    .alarm-inline-toggle {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.35rem;
+    }
+
+    .alarm-switch-desktop {
+        display: none;
+    }
+
+    .alarm-main {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: start;
+        column-gap: 1rem;
+    }
+
+    .alarm-time-column {
+        display: block;
+    }
+
     .alarm-actions .btn {
-        flex: 1 1 calc(33.333% - 0.5rem);
+        flex: 1 1 calc(50% - 0.5rem);
         min-width: 0;
         padding-block: 0.6rem;
     }

@@ -32,12 +32,9 @@ public sealed class HomeAssistantEventPublisher(
 
         var payload = new
         {
-            alarmId = alarm.Id,
-            alarmName = alarm.Name,
-            description = alarm.Description,
-            repeatMode = alarm.RepeatMode.ToString(),
-            scheduledLocal = scheduledOccurrence.ToString("O"),
-            triggeredUtc = DateTimeOffset.UtcNow.ToString("O")
+            name = alarm.Name,
+            time = alarm.Time.ToString("HH\\:mm"),
+            description = string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim()
         };
 
         var client = httpClientFactory.CreateClient(nameof(HomeAssistantEventPublisher));
@@ -48,12 +45,22 @@ public sealed class HomeAssistantEventPublisher(
 
         if (response.IsSuccessStatusCode)
         {
-            logger.LogInformation("Alarm {AlarmId} published Home Assistant event {EventType}", alarm.Id, AlarmTriggeredEventType);
+            logger.LogInformation(
+                "Alarm triggered: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                alarm.Name,
+                alarm.Time.ToString("HH\\:mm"),
+                string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim());
             return (true, $"Event {AlarmTriggeredEventType} sent.");
         }
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        logger.LogWarning("Home Assistant event publish failed for {AlarmId}. Status {StatusCode}. Body: {Body}", alarm.Id, response.StatusCode, body);
+        logger.LogError(
+            "Error triggering alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', StatusCode={StatusCode}, Body='{ResponseBody}'",
+            alarm.Name,
+            alarm.Time.ToString("HH\\:mm"),
+            string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim(),
+            (int)response.StatusCode,
+            body);
         return (false, $"Home Assistant returned {(int)response.StatusCode}.");
     }
 

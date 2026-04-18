@@ -2,6 +2,7 @@
 @inject IAlarmStore Store
 @inject AlarmOccurrenceService OccurrenceService
 @inject IJSRuntime JS
+@inject ILogger<Home> Logger
 
 <PageTitle>WakeMeUp</PageTitle>
 
@@ -37,8 +38,26 @@
                     var nextOccurrence = OccurrenceService.GetNextOccurrence(alarm, DateTimeOffset.Now);
                     <article class="alarm-card">
                         <div class="alarm-main">
-                            <div class="alarm-time">@alarm.Time.ToString("HH\\:mm")</div>
-                            <div>
+                            <div class="alarm-time-column">
+                                <div class="alarm-time">@alarm.Time.ToString("HH\\:mm")</div>
+                                <div class="form-check form-switch alarm-switch alarm-switch-desktop">
+                                    <InputCheckbox class="form-check-input"
+                                                   Value="alarm.IsEnabled"
+                                                   ValueChanged="@(value => ToggleAlarm(alarm, value))"
+                                                   ValueExpression="@(() => alarm.IsEnabled)" />
+                                    <label class="form-check-label">Enabled</label>
+                                </div>
+                            </div>
+                            <div class="alarm-content">
+                                <div class="alarm-inline-toggle">
+                                    <div class="form-check form-switch alarm-switch">
+                                        <InputCheckbox class="form-check-input"
+                                                       Value="alarm.IsEnabled"
+                                                       ValueChanged="@(value => ToggleAlarm(alarm, value))"
+                                                       ValueExpression="@(() => alarm.IsEnabled)" />
+                                        <label class="form-check-label">Enabled</label>
+                                    </div>
+                                </div>
                                 <div class="alarm-title-row">
                                     <h3>@alarm.Name</h3>
                                     <span class="badge text-bg-secondary">@GetRepeatLabel(alarm)</span>
@@ -60,9 +79,6 @@
 
                         <div class="alarm-actions">
                             <button class="btn btn-outline-secondary btn-sm" @onclick="() => EditAlarm(alarm)">Edit</button>
-                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleAlarm(alarm)">
-                                @(alarm.IsEnabled ? "Disable" : "Enable")
-                            </button>
                             <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteAlarm(alarm.Id)">Delete</button>
                         </div>
                     </article>
@@ -217,25 +233,70 @@
         focusEditorPending = true;
     }
 
-    private async Task ToggleAlarm(AlarmDefinition alarm)
+    private async Task ToggleAlarm(AlarmDefinition alarm, bool isEnabled)
     {
-        alarm.IsEnabled = !alarm.IsEnabled;
-        await Store.SaveAlarmAsync(alarm);
-        statusMessage = alarm.IsEnabled ? "Alarm enabled." : "Alarm disabled.";
-        isError = false;
-        await LoadAsync();
+        try
+        {
+            alarm.IsEnabled = isEnabled;
+            await Store.SaveAlarmAsync(alarm);
+            Logger.LogInformation(
+                "Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
+                alarm.Name,
+                alarm.Time.ToString("HH\\:mm"),
+                GetLogDescription(alarm.Description),
+                alarm.IsEnabled);
+            statusMessage = alarm.IsEnabled ? "Alarm enabled." : "Alarm disabled.";
+            isError = false;
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Error updating alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                alarm.Name,
+                alarm.Time.ToString("HH\\:mm"),
+                GetLogDescription(alarm.Description));
+            statusMessage = "Unable to update the alarm.";
+            isError = true;
+        }
     }
 
     private async Task DeleteAlarm(Guid alarmId)
     {
-        await Store.DeleteAlarmAsync(alarmId);
-        statusMessage = "Alarm deleted.";
-        isError = false;
-        if (editor.Id == alarmId)
+        var alarm = alarms.FirstOrDefault(x => x.Id == alarmId);
+
+        try
         {
-            CloseEditor();
+            await Store.DeleteAlarmAsync(alarmId);
+            if (alarm is not null)
+            {
+                Logger.LogInformation(
+                    "Alarm deleted: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                    alarm.Name,
+                    alarm.Time.ToString("HH\\:mm"),
+                    GetLogDescription(alarm.Description));
+            }
+
+            statusMessage = "Alarm deleted.";
+            isError = false;
+            if (editor.Id == alarmId)
+            {
+                CloseEditor();
+            }
+            await LoadAsync();
         }
-        await LoadAsync();
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Error deleting alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                alarm?.Name ?? "Unknown",
+                alarm?.Time.ToString("HH\\:mm") ?? "Unknown",
+                GetLogDescription(alarm?.Description));
+            statusMessage = "Unable to delete the alarm.";
+            isError = true;
+        }
     }
 
     private async Task SaveAlarmAsync()
@@ -247,11 +308,30 @@
             return;
         }
 
-        await Store.SaveAlarmAsync(alarm);
-        statusMessage = editor.IsEditMode ? "Alarm updated." : "Alarm created.";
-        isError = false;
-        CloseEditor();
-        await LoadAsync();
+        try
+        {
+            await Store.SaveAlarmAsync(alarm);
+            Logger.LogInformation(
+                "Alarm set: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                alarm.Name,
+                alarm.Time.ToString("HH\\:mm"),
+                GetLogDescription(alarm.Description));
+            statusMessage = editor.IsEditMode ? "Alarm updated." : "Alarm created.";
+            isError = false;
+            CloseEditor();
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Error saving alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}'",
+                alarm.Name,
+                alarm.Time.ToString("HH\\:mm"),
+                GetLogDescription(alarm.Description));
+            statusMessage = "Unable to save the alarm.";
+            isError = true;
+        }
     }
 
     private void ToggleEditorDay(WeekdaySelection day, bool enabled)
@@ -317,6 +397,11 @@
         return occurrence.HasValue
             ? occurrence.Value.LocalDateTime.ToString("ddd MM/dd HH:mm")
             : "Not scheduled";
+    }
+
+    private static string GetLogDescription(string? description)
+    {
+        return string.IsNullOrWhiteSpace(description) ? "No notes." : description.Trim();
     }
 
     private sealed class AlarmEditorModel

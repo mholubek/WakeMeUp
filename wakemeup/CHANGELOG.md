@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Added direct alarm enable and disable switches to the overview cards with desktop and mobile specific placement
+- Improved alarm card layout for long alarm names
+- Added clearer alarm set, triggered, deleted, and error logs in Home Assistant
+- Simplified the Home Assistant event payload to `name`, `time`, and `description`
+
 ## 0.1.2
 
 - Persisted ASP.NET Data Protection keys in the add-on data directory to avoid antiforgery token issues after restarts

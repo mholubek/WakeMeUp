@@ -57,7 +57,16 @@ public sealed class AlarmScheduler(
             }
 
             await store.SaveAlarmAsync(alarm, cancellationToken);
-            logger.LogInformation("Processed alarm {AlarmId} with result {Result}", alarm.Id, message);
+
+            if (!success)
+            {
+                logger.LogError(
+                    "Error processing alarm: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Result='{Result}'",
+                    alarm.Name,
+                    alarm.Time.ToString("HH\\:mm"),
+                    string.IsNullOrWhiteSpace(alarm.Description) ? "No notes." : alarm.Description.Trim(),
+                    message);
+            }
         }
     }
 }
