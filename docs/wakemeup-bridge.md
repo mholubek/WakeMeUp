@@ -3,6 +3,7 @@
 `wakemeup_bridge` is a companion Home Assistant custom integration for the WakeMeUp add-on.
 
 Its purpose is to expose stable Home Assistant API endpoints for a Lovelace card so the frontend does not need to know or configure the add-on ingress URL.
+It also exposes helper entities for automations and bulk alarm control.
 
 ## What it does
 
@@ -11,10 +12,17 @@ The bridge registers authenticated Home Assistant endpoints under:
 - `GET /api/wakemeup/meta`
 - `GET /api/wakemeup/alarms`
 - `POST /api/wakemeup/alarms`
+- `PATCH /api/wakemeup/alarms/enabled`
 - `GET /api/wakemeup/alarms/{id}`
 - `PUT /api/wakemeup/alarms/{id}`
 - `DELETE /api/wakemeup/alarms/{id}`
 - `PATCH /api/wakemeup/alarms/{id}/enabled`
+
+It also creates these Home Assistant entities:
+
+- `binary_sensor.wakemeup_bridge_alarm_triggered`
+- `button.wakemeup_bridge_enable_all_alarms`
+- `button.wakemeup_bridge_disable_all_alarms`
 
 Internally, the bridge:
 
@@ -36,6 +44,7 @@ The card only needs to call `/api/wakemeup/...` on the Home Assistant origin.
 7. Make sure the WakeMeUp add-on is installed and started.
 
 After that, the Home Assistant backend will expose the stable `/api/wakemeup/...` routes for the card.
+The binary sensor turns on for 30 seconds after the add-on emits `wakemeup_alarm_triggered`, which makes it easier to build state-based automations.
 
 ## Minimal Lovelace Card Migration
 
@@ -55,10 +64,28 @@ Example endpoint mapping:
 - `GET ${API_BASE}/meta`
 - `GET ${API_BASE}/alarms`
 - `POST ${API_BASE}/alarms`
+- `PATCH ${API_BASE}/alarms/enabled`
 - `GET ${API_BASE}/alarms/${id}`
 - `PUT ${API_BASE}/alarms/${id}`
 - `DELETE ${API_BASE}/alarms/${id}`
 - `PATCH ${API_BASE}/alarms/${id}/enabled`
+
+Bulk enable or disable request body:
+
+```json
+{
+  "isEnabled": true
+}
+```
+
+Bulk enable or disable response body:
+
+```json
+{
+  "isEnabled": true,
+  "updatedCount": 3
+}
+```
 
 ## Frontend Simplification
 

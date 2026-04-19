@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- Added WakeMeUp Bridge helper entities for Home Assistant automations: a temporary `alarm_triggered` binary sensor plus bulk enable and disable buttons for all alarms
+- Added the bridge bulk API endpoint `PATCH /api/wakemeup/alarms/enabled` for companion app and HACS card control
+
 ## 0.1.9
 
 - Auto-detect the initial app language for new users from Home Assistant first, then from the browser, with English as the fallback

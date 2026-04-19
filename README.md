@@ -163,12 +163,18 @@ The bridge exposes stable authenticated Home Assistant endpoints:
 - `GET /api/wakemeup/meta`
 - `GET /api/wakemeup/alarms`
 - `POST /api/wakemeup/alarms`
+- `PATCH /api/wakemeup/alarms/enabled`
 - `GET /api/wakemeup/alarms/{id}`
 - `PUT /api/wakemeup/alarms/{id}`
 - `DELETE /api/wakemeup/alarms/{id}`
 - `PATCH /api/wakemeup/alarms/{id}/enabled`
 
 This lets a Lovelace card call WakeMeUp through the normal Home Assistant frontend origin without knowing the add-on ingress URL.
+The bridge also exposes helper entities in Home Assistant:
+
+- `binary_sensor.wakemeup_bridge_alarm_triggered` turns on for 30 seconds when an alarm fires and includes the last alarm details in its attributes
+- `button.wakemeup_bridge_enable_all_alarms`
+- `button.wakemeup_bridge_disable_all_alarms`
 
 See [docs/wakemeup-bridge.md](./docs/wakemeup-bridge.md) for installation and the minimal frontend migration steps.
 

@@ -14,6 +14,7 @@ from .const import API_BASE_PATH, DATA_ADDON_CLIENT, DOMAIN
 def async_register_views(hass: HomeAssistant) -> None:
     hass.http.register_view(WakeMeUpMetaView(hass))
     hass.http.register_view(WakeMeUpAlarmsView(hass))
+    hass.http.register_view(WakeMeUpAlarmsEnabledView(hass))
     hass.http.register_view(WakeMeUpAlarmDetailView(hass))
     hass.http.register_view(WakeMeUpAlarmEnabledView(hass))
 
@@ -77,6 +78,57 @@ class WakeMeUpAlarmsView(WakeMeUpBaseView):
 
     async def post(self, request: Request) -> Response:
         return await self._proxy("POST", "/alarms", request)
+
+
+class WakeMeUpAlarmsEnabledView(WakeMeUpBaseView):
+    url = f"{API_BASE_PATH}/alarms/enabled"
+    name = "api:wake_me_up:alarms_enabled"
+
+    async def patch(self, request: Request) -> Response:
+        try:
+            payload = await request.json()
+        except json.JSONDecodeError:
+            return self.json_message(
+                "Request body must contain valid JSON.",
+                status_code=400,
+            )
+
+        if not isinstance(payload, dict) or "isEnabled" not in payload:
+            return self.json(
+                {
+                    "error": "Request body must contain the 'isEnabled' field.",
+                    "details": [],
+                },
+                status_code=400,
+            )
+
+        is_enabled = payload["isEnabled"]
+        if not isinstance(is_enabled, bool):
+            return self.json(
+                {
+                    "error": "The 'isEnabled' field must be a boolean.",
+                    "details": [],
+                },
+                status_code=400,
+            )
+
+        try:
+            updated_count = await self._client.async_set_all_alarms_enabled(is_enabled)
+        except WakeMeUpBridgeError as err:
+            return self.json(
+                {
+                    "error": str(err),
+                    "details": [],
+                },
+                status_code=502,
+            )
+
+        return self.json(
+            {
+                "isEnabled": is_enabled,
+                "updatedCount": updated_count,
+            }
+        )
 
 
 class WakeMeUpAlarmDetailView(WakeMeUpBaseView):
