@@ -79,19 +79,22 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
             await connection.OpenAsync(cancellationToken);
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT theme_mode FROM app_settings WHERE id = 1;";
+            command.CommandText = "SELECT theme_mode, language FROM app_settings WHERE id = 1;";
 
-            var scalar = await command.ExecuteScalarAsync(cancellationToken);
-            if (scalar is null || scalar is DBNull)
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
             {
                 return new AppSettings();
             }
 
             return new AppSettings
             {
-                ThemeMode = Enum.TryParse<ThemeMode>(Convert.ToString(scalar), out var themeMode)
+                ThemeMode = Enum.TryParse<ThemeMode>(Convert.ToString(reader.GetValue(0)), out var themeMode)
                     ? themeMode
-                    : ThemeMode.Auto
+                    : ThemeMode.Auto,
+                Language = Enum.TryParse<AppLanguage>(Convert.ToString(reader.GetValue(1)), out var language)
+                    ? language
+                    : AppLanguage.English
             };
         }
         finally
@@ -179,13 +182,15 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
             var command = connection.CreateCommand();
             command.CommandText =
                 """
-                INSERT INTO app_settings (id, theme_mode)
-                VALUES (1, $theme_mode)
+                INSERT INTO app_settings (id, theme_mode, language)
+                VALUES (1, $theme_mode, $language)
                 ON CONFLICT(id) DO UPDATE SET
-                    theme_mode = excluded.theme_mode;
+                    theme_mode = excluded.theme_mode,
+                    language = excluded.language;
                 """;
 
             command.Parameters.AddWithValue("$theme_mode", settings.ThemeMode.ToString());
+            command.Parameters.AddWithValue("$language", settings.Language.ToString());
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
         finally
@@ -236,11 +241,13 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
 
                 CREATE TABLE IF NOT EXISTS app_settings (
                     id INTEGER PRIMARY KEY CHECK (id = 1),
-                    theme_mode TEXT NOT NULL
+                    theme_mode TEXT NOT NULL,
+                    language TEXT NOT NULL DEFAULT 'English'
                 );
                 """;
 
             await command.ExecuteNonQueryAsync(cancellationToken);
+            await EnsureColumnExistsAsync(connection, "app_settings", "language", "TEXT NOT NULL DEFAULT 'English'", cancellationToken);
             await SeedDefaultsAsync(connection, cancellationToken);
 
             _initialized = true;
@@ -261,10 +268,37 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
         if (settingsCount == 0)
         {
             var insertSettings = connection.CreateCommand();
-            insertSettings.CommandText = "INSERT INTO app_settings (id, theme_mode) VALUES (1, $theme_mode);";
+            insertSettings.CommandText = "INSERT INTO app_settings (id, theme_mode, language) VALUES (1, $theme_mode, $language);";
             insertSettings.Parameters.AddWithValue("$theme_mode", ThemeMode.Auto.ToString());
+            insertSettings.Parameters.AddWithValue("$language", AppLanguage.English.ToString());
             await insertSettings.ExecuteNonQueryAsync(cancellationToken);
         }
+    }
+
+    private static async Task EnsureColumnExistsAsync(
+        SqliteConnection connection,
+        string tableName,
+        string columnName,
+        string columnDefinition,
+        CancellationToken cancellationToken)
+    {
+        var pragmaCommand = connection.CreateCommand();
+        pragmaCommand.CommandText = $"PRAGMA table_info({tableName});";
+
+        await using var reader = await pragmaCommand.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        await reader.DisposeAsync();
+
+        var alterCommand = connection.CreateCommand();
+        alterCommand.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition};";
+        await alterCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private SqliteConnection OpenConnection()

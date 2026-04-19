@@ -1,39 +1,48 @@
 @page "/settings"
 @inject IAlarmStore Store
 @inject IJSRuntime JS
+@inject UiTextService Texts
 
-<PageTitle>Settings</PageTitle>
+<PageTitle>@Texts["PageTitleSettings"]</PageTitle>
 
 <div class="panel-card panel-card-wide">
     <div class="section-heading">
-        <p class="section-kicker">Settings</p>
+        <p class="section-kicker">@Texts["Settings"]</p>
     </div>
 
     <EditForm Model="settings" OnValidSubmit="SaveSettingsAsync" FormName="app-settings" class="stack-form">
-        <DataAnnotationsValidator />
-
         <div>
-            <label class="form-label">Theme</label>
+            <label class="form-label">@Texts["Theme"]</label>
             <InputSelect class="form-select" @bind-Value="settings.ThemeMode">
                 @foreach (var mode in Enum.GetValues<ThemeMode>())
                 {
                     <option value="@mode">@GetThemeModeName(mode)</option>
                 }
             </InputSelect>
-            <div class="form-text">Auto mode follows the Home Assistant theme when available and falls back to the device theme.</div>
+            <div class="form-text">@Texts["ThemeDescription"]</div>
         </div>
 
-        <button type="submit" class="btn btn-primary">Save settings</button>
+        <div>
+            <label class="form-label">@Texts["Language"]</label>
+            <InputSelect class="form-select" @bind-Value="settings.Language">
+                @foreach (var language in Texts.GetSupportedLanguages())
+                {
+                    <option value="@language.Value">@language.DisplayName</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">@Texts["SaveSettings"]</button>
     </EditForm>
 
     <div class="status-callout mt-4">
-        <p>@TimeZoneInfo.Local.DisplayName</p>
+        <p>@Texts["TimeZone"]: @TimeZoneInfo.Local.DisplayName</p>
     </div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(statusMessage))
 {
-    <div class="toast-banner @(isError ? "toast-banner-error" : "toast-banner-success")">
+    <div class="toast-banner @(isError ? "toast-banner-error" : "toast-banner-success")" @onclick="DismissStatusMessageAsync">
         @statusMessage
     </div>
 }
@@ -43,10 +52,12 @@
     private bool isError;
     private bool themeSyncPending;
     private string statusMessage = string.Empty;
+    private CancellationTokenSource? statusMessageCts;
 
     protected override async Task OnInitializedAsync()
     {
         settings = await Store.GetSettingsAsync();
+        Texts.SetLanguage(settings.Language);
         themeSyncPending = true;
     }
 
@@ -64,9 +75,9 @@
     private async Task SaveSettingsAsync()
     {
         await Store.SaveSettingsAsync(settings);
+        Texts.SetLanguage(settings.Language);
         await ApplyThemeAsync();
-        statusMessage = "Settings saved.";
-        isError = false;
+        ShowStatusMessage(Texts["SettingsSaved"], false);
     }
 
     private async Task ApplyThemeAsync()
@@ -74,14 +85,48 @@
         await JS.InvokeVoidAsync("wakeMeUpTheme.apply", settings.ThemeMode.ToString());
     }
 
-    private static string GetThemeModeName(ThemeMode mode)
+    private string GetThemeModeName(ThemeMode mode)
     {
         return mode switch
         {
-            ThemeMode.Auto => "Automatic",
-            ThemeMode.Light => "Light",
-            ThemeMode.Dark => "Dark",
+            ThemeMode.Auto => Texts["Automatic"],
+            ThemeMode.Light => Texts["Light"],
+            ThemeMode.Dark => Texts["Dark"],
             _ => mode.ToString()
         };
+    }
+
+    private void ShowStatusMessage(string message, bool error)
+    {
+        statusMessageCts?.Cancel();
+        statusMessageCts?.Dispose();
+
+        statusMessage = message;
+        isError = error;
+
+        statusMessageCts = new CancellationTokenSource();
+        _ = DismissStatusMessageAfterDelayAsync(statusMessageCts.Token);
+    }
+
+    private async Task DismissStatusMessageAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            await InvokeAsync(DismissStatusMessageAsync);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private Task DismissStatusMessageAsync()
+    {
+        statusMessageCts?.Cancel();
+        statusMessageCts?.Dispose();
+        statusMessageCts = null;
+        statusMessage = string.Empty;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }

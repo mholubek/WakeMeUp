@@ -1,4 +1,7 @@
 @inherits LayoutComponentBase
+@inject IAlarmStore Store
+@inject UiTextService Texts
+@implements IDisposable
 
 <div class="app-shell">
     <NavMenu />
@@ -11,7 +14,26 @@
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unexpected error has occurred.
-    <a href="." class="reload">Reload</a>
+    @Texts["UnexpectedError"]
+    <a href="." class="reload">@Texts["Reload"]</a>
     <span class="dismiss">x</span>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Texts.Changed += HandleTextsChanged;
+        var settings = await Store.GetSettingsAsync();
+        Texts.SetLanguage(settings.Language);
+    }
+
+    private void HandleTextsChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Texts.Changed -= HandleTextsChanged;
+    }
+}

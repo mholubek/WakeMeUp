@@ -274,8 +274,24 @@ a,
     gap: 0.65rem 0.9rem;
 }
 
+.alarm-title-row {
+    align-items: center;
+    margin-bottom: 0.35rem;
+}
+
 .alarm-title-row h3 {
     overflow-wrap: anywhere;
+}
+
+.alarm-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alarm-description {
+    margin: 0 0 0.55rem;
 }
 
 .alarm-inline-toggle {
@@ -287,7 +303,7 @@ a,
     align-items: center;
     gap: 0.55rem;
     margin: 0;
-    padding: 0.55rem 0.8rem;
+    padding: 0.4rem 0.75rem;
     border: 1px solid var(--wm-border);
     border-radius: 1rem;
     background: var(--wm-surface-strong);
@@ -311,7 +327,12 @@ a,
     border-radius: 1rem;
     border: 1px solid var(--wm-border);
     background: var(--wm-accent-soft);
-    padding: 0.55rem 0.8rem;
+    padding: 0.42rem 0.75rem;
+}
+
+.alarm-title-row .badge {
+    padding: 0.38rem 0.55rem;
+    line-height: 1.05;
 }
 
 .alarm-actions {
@@ -327,6 +348,10 @@ a,
 .alarm-actions .btn {
     min-width: 6.9rem;
     padding-block: 0.52rem;
+}
+
+.editor-close-button {
+    align-self: flex-start;
 }
 
 .weekday-grid {
@@ -397,6 +422,21 @@ a,
 .btn {
     border-radius: 999px;
     padding-inline: 1rem;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+}
+
+.btn-icon svg {
+    width: 100%;
+    height: 100%;
 }
 
 .btn-primary {
@@ -523,7 +563,7 @@ a,
     .alarm-inline-toggle {
         display: flex;
         justify-content: flex-end;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.5rem;
     }
 
     .alarm-switch-desktop {
@@ -541,10 +581,79 @@ a,
         display: block;
     }
 
+    .alarm-overview-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .alarm-overview-heading .btn {
+        align-self: flex-end;
+        margin-left: 0;
+    }
+
+    .alarm-time-column {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        grid-column: 1 / -1;
+    }
+
+    .alarm-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        grid-column: 1 / -1;
+    }
+
+    .alarm-inline-toggle .alarm-switch {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .alarm-inline-toggle .form-check-label {
+        display: none;
+    }
+
+    .alarm-title-row {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.45rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .alarm-badges {
+        justify-content: flex-start;
+    }
+
+    .alarm-meta {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
     .alarm-actions .btn {
         flex: 1 1 calc(50% - 0.5rem);
         min-width: 0;
         padding-block: 0.6rem;
+    }
+
+    .editor-modal .section-heading {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .editor-modal .section-heading > div:first-child {
+        flex: 1 1 auto;
+    }
+
+    .editor-close-button {
+        margin-left: auto;
+        align-self: flex-start;
     }
 
     .weekday-grid {

@@ -1,7 +1,9 @@
 @inject IHttpContextAccessor HttpContextAccessor
+@inject UiTextService Texts
+@implements IDisposable
 
 <!DOCTYPE html>
-<html lang="sk" data-bs-theme="light">
+<html lang="@Texts.GetHtmlLanguage()" data-bs-theme="light">
 
 <head>
     <meta charset="utf-8" />
@@ -28,6 +30,11 @@
 </html>
 
 @code {
+    protected override void OnInitialized()
+    {
+        Texts.Changed += HandleTextsChanged;
+    }
+
     private string GetBaseHref()
     {
         var pathBase = HttpContextAccessor.HttpContext?.Request.PathBase.Value;
@@ -38,5 +45,15 @@
         }
 
         return pathBase.EndsWith('/') ? pathBase : $"{pathBase}/";
+    }
+
+    private void HandleTextsChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Texts.Changed -= HandleTextsChanged;
     }
 }

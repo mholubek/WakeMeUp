@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6
+
+- Added full UI language selection with persisted app language settings
+- Added German, French, Spanish, Portuguese, Italian, Slovak, Czech, Polish, Ukrainian, Greek, Esperanto, and Klingon UI translations
+- Applied the selected language to UI text and culture-aware date formatting
+- Improved mobile alarm card and editor layout
+- Added icons to main action buttons for alarm cards and the editor
+- Updated toast messages to dismiss on click and automatically disappear after 5 seconds
+
 ## 0.1.5
 
 - Removed the remaining fallback text for blank alarm descriptions from the UI and custom logs

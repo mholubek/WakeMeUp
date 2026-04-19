@@ -3,31 +3,39 @@
 @inject AlarmOccurrenceService OccurrenceService
 @inject IJSRuntime JS
 @inject ILogger<Home> Logger
+@inject UiTextService Texts
 
-<PageTitle>WakeMeUp</PageTitle>
+<PageTitle>@Texts["PageTitleHome"]</PageTitle>
 
 <div class="dashboard-grid">
     <section class="panel-card panel-card-wide">
-        <div class="section-heading">
+        <div class="section-heading alarm-overview-heading">
             <div>
-                <p class="section-kicker">Alarms</p>
-                <h2>Alarm overview</h2>
+                <p class="section-kicker">@Texts["Alarms"]</p>
+                <h2>@Texts["AlarmOverview"]</h2>
             </div>
-            <button class="btn btn-primary" @onclick="StartCreate">New alarm</button>
+            <button class="btn btn-primary" @onclick="StartCreate">
+                <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M7 2h2v5h5v2H9v5H7V9H2V7h5z" />
+                    </svg>
+                </span>
+                <span>@Texts["NewAlarm"]</span>
+            </button>
         </div>
 
         @if (isLoading)
         {
             <div class="empty-state">
                 <div class="spinner-border text-primary" role="status"></div>
-                <p>Loading saved alarms...</p>
+                <p>@Texts["LoadingSavedAlarms"]</p>
             </div>
         }
         else if (alarms.Count == 0)
         {
             <div class="empty-state">
-                <h3>No alarms yet</h3>
-                <p>Create your first alarm and set a time and repeat rule.</p>
+                <h3>@Texts["NoAlarmsYet"]</h3>
+                <p>@Texts["NoAlarmsYetText"]</p>
             </div>
         }
         else
@@ -45,7 +53,7 @@
                                                    Value="alarm.IsEnabled"
                                                    ValueChanged="@(value => ToggleAlarm(alarm, value))"
                                                    ValueExpression="@(() => alarm.IsEnabled)" />
-                                    <label class="form-check-label">Enabled</label>
+                                    <label class="form-check-label">@Texts["Enabled"]</label>
                                 </div>
                             </div>
                             <div class="alarm-content">
@@ -55,31 +63,50 @@
                                                        Value="alarm.IsEnabled"
                                                        ValueChanged="@(value => ToggleAlarm(alarm, value))"
                                                        ValueExpression="@(() => alarm.IsEnabled)" />
-                                        <label class="form-check-label">Enabled</label>
                                     </div>
                                 </div>
                                 <div class="alarm-title-row">
                                     <h3>@alarm.Name</h3>
-                                    <span class="badge text-bg-secondary">@GetRepeatLabel(alarm)</span>
-                                    @if (alarm.IsEnabled)
-                                    {
-                                        <span class="badge text-bg-success">Enabled</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge text-bg-dark">Disabled</span>
-                                    }
+                                    <div class="alarm-badges">
+                                        <span class="badge text-bg-secondary">@GetRepeatLabel(alarm)</span>
+                                        @if (alarm.IsEnabled)
+                                        {
+                                            <span class="badge text-bg-success">@Texts["Enabled"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-dark">@Texts["Disabled"]</span>
+                                        }
+                                    </div>
                                 </div>
-                                <p class="alarm-description">@alarm.Description</p>
+                                @if (!string.IsNullOrWhiteSpace(alarm.Description))
+                                {
+                                    <p class="alarm-description">@alarm.Description</p>
+                                }
                                 <div class="alarm-meta">
-                                    <span>Next trigger: @FormatOccurrence(nextOccurrence)</span>
+                                    <span>@Texts["NextTrigger"]: @FormatOccurrence(nextOccurrence)</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="alarm-actions">
-                            <button class="btn btn-outline-secondary btn-sm" @onclick="() => EditAlarm(alarm)">Edit</button>
-                            <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteAlarm(alarm.Id)">Delete</button>
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="() => EditAlarm(alarm)">
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M12.854 1.146a.5.5 0 0 1 .707 0l1.586 1.586a.5.5 0 0 1 0 .707l-8.5 8.5L4 12l.061-2.646zM3 13.5A1.5 1.5 0 0 0 4.5 15h8a.5.5 0 0 0 0-1h-8a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 0-1 0z" />
+                                    </svg>
+                                </span>
+                                <span>@Texts["Edit"]</span>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteAlarm(alarm.Id)">
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1zM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4z" />
+                                    </svg>
+                                </span>
+                                <span>@Texts["Delete"]</span>
+                            </button>
                         </div>
                     </article>
                 }
@@ -99,29 +126,32 @@
                  @onkeydown="HandleModalKeyDown">
             <div class="section-heading">
                 <div>
-                    <p class="section-kicker">Editor</p>
-                    <h2>@(editor.IsEditMode ? "Edit alarm" : "New alarm")</h2>
+                    <p class="section-kicker">@Texts["Editor"]</p>
+                    <h2>@(editor.IsEditMode ? Texts["EditAlarm"] : Texts["NewAlarm"])</h2>
                 </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="CloseEditor">Close</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm editor-close-button" @onclick="CloseEditor">
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                        </svg>
+                    </span>
+                    <span>@Texts["Close"]</span>
+                </button>
             </div>
 
             <EditForm Model="editor" OnValidSubmit="SaveAlarmAsync" FormName="alarm-editor" class="stack-form">
-                <DataAnnotationsValidator />
-
                 <div>
-                    <label class="form-label">Name</label>
+                    <label class="form-label">@Texts["Name"]</label>
                     <InputText class="form-control" @bind-Value="editor.Name" />
-                    <ValidationMessage For="@(() => editor.Name)" />
                 </div>
 
                 <div>
-                    <label class="form-label">Time</label>
+                    <label class="form-label">@Texts["Time"]</label>
                     <InputText class="form-control" type="time" @bind-Value="editor.TimeText" />
-                    <ValidationMessage For="@(() => editor.TimeText)" />
                 </div>
 
                 <div>
-                    <label class="form-label">Repeat</label>
+                    <label class="form-label">@Texts["Repeat"]</label>
                     <InputSelect class="form-select" @bind-Value="editor.RepeatMode">
                         @foreach (var mode in Enum.GetValues<RepeatMode>())
                         {
@@ -133,7 +163,7 @@
                 @if (editor.RepeatMode == RepeatMode.CustomDays)
                 {
                     <div>
-                        <label class="form-label">Choose days</label>
+                        <label class="form-label">@Texts["ChooseDays"]</label>
                         <div class="weekday-grid">
                             @foreach (var day in weekdays)
                             {
@@ -149,18 +179,24 @@
                 }
 
                 <div>
-                    <label class="form-label">Note</label>
+                    <label class="form-label">@Texts["Note"]</label>
                     <InputTextArea class="form-control" rows="3" @bind-Value="editor.Description" />
                 </div>
 
                 <div class="form-check form-switch">
                     <InputCheckbox class="form-check-input" @bind-Value="editor.IsEnabled" />
-                    <label class="form-check-label">Alarm is enabled</label>
+                    <label class="form-check-label">@Texts["AlarmIsEnabled"]</label>
                 </div>
 
                 <div class="editor-actions">
-                    <button type="submit" class="btn btn-primary">Save alarm</button>
-                    <button type="button" class="btn btn-outline-secondary" @onclick="ResetEditor">Clear form</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-8.793a1.5 1.5 0 0 0-.44-1.06L12.354.94A1.5 1.5 0 0 0 11.293.5H2.5zM3 2h8v3H3zm0 5h10v6.5a.5.5 0 0 1-.5.5H11v-3.5A1.5 1.5 0 0 0 9.5 9h-3A1.5 1.5 0 0 0 5 10.5V14H3.5a.5.5 0 0 1-.5-.5zm3 7v-3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V14z" />
+                            </svg>
+                        </span>
+                        <span>@Texts["SaveAlarm"]</span>
+                    </button>
                 </div>
             </EditForm>
         </section>
@@ -169,23 +205,13 @@
 
 @if (!string.IsNullOrWhiteSpace(statusMessage))
 {
-    <div class="toast-banner @(isError ? "toast-banner-error" : "toast-banner-success")">
+    <div class="toast-banner @(isError ? "toast-banner-error" : "toast-banner-success")" @onclick="DismissStatusMessageAsync">
         @statusMessage
     </div>
 }
 
 @code {
-    private static readonly (WeekdaySelection Flag, string ShortName)[] weekdays =
-    [
-        (WeekdaySelection.Monday, "Mon"),
-        (WeekdaySelection.Tuesday, "Tue"),
-        (WeekdaySelection.Wednesday, "Wed"),
-        (WeekdaySelection.Thursday, "Thu"),
-        (WeekdaySelection.Friday, "Fri"),
-        (WeekdaySelection.Saturday, "Sat"),
-        (WeekdaySelection.Sunday, "Sun")
-    ];
-
+    private (WeekdaySelection Flag, string ShortName)[] weekdays = [];
     private readonly AlarmEditorModel editor = new();
     private List<AlarmDefinition> alarms = [];
     private bool isLoading = true;
@@ -194,9 +220,11 @@
     private bool focusEditorPending;
     private ElementReference editorModalRef;
     private string statusMessage = string.Empty;
+    private CancellationTokenSource? statusMessageCts;
 
     protected override async Task OnInitializedAsync()
     {
+        BuildWeekdays();
         await LoadAsync();
     }
 
@@ -211,9 +239,24 @@
         await JS.InvokeVoidAsync("wakeMeUpUi.focusElement", editorModalRef);
     }
 
+    private void BuildWeekdays()
+    {
+        weekdays =
+        [
+            (WeekdaySelection.Monday, Texts["Mon"]),
+            (WeekdaySelection.Tuesday, Texts["Tue"]),
+            (WeekdaySelection.Wednesday, Texts["Wed"]),
+            (WeekdaySelection.Thursday, Texts["Thu"]),
+            (WeekdaySelection.Friday, Texts["Fri"]),
+            (WeekdaySelection.Saturday, Texts["Sat"]),
+            (WeekdaySelection.Sunday, Texts["Sun"])
+        ];
+    }
+
     private async Task LoadAsync()
     {
         isLoading = true;
+        BuildWeekdays();
         alarms = (await Store.GetAlarmsAsync()).OrderBy(x => x.Time).ToList();
         isLoading = false;
     }
@@ -221,7 +264,7 @@
     private void StartCreate()
     {
         ResetEditor();
-        editor.Name = $"Alarm {alarms.Count + 1}";
+        editor.Name = $"{Texts["NewAlarm"]} {alarms.Count + 1}";
         isEditorOpen = true;
         focusEditorPending = true;
     }
@@ -255,8 +298,7 @@
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description),
                 alarm.IsEnabled);
-            statusMessage = alarm.IsEnabled ? "Alarm enabled." : "Alarm disabled.";
-            isError = false;
+            ShowStatusMessage(alarm.IsEnabled ? Texts["AlarmEnabled"] : Texts["AlarmDisabled"], false);
             await LoadAsync();
         }
         catch (Exception exception)
@@ -268,8 +310,7 @@
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description));
-            statusMessage = "Unable to update the alarm.";
-            isError = true;
+            ShowStatusMessage(Texts["UnableUpdateAlarm"], true);
         }
     }
 
@@ -290,8 +331,7 @@
                     GetLogDescription(alarm.Description));
             }
 
-            statusMessage = "Alarm deleted.";
-            isError = false;
+            ShowStatusMessage(Texts["AlarmDeleted"], false);
             if (editor.Id == alarmId)
             {
                 CloseEditor();
@@ -307,17 +347,15 @@
                 alarm?.Name ?? "Unknown",
                 alarm?.Time.ToString("HH\\:mm") ?? "Unknown",
                 GetLogDescription(alarm?.Description));
-            statusMessage = "Unable to delete the alarm.";
-            isError = true;
+            ShowStatusMessage(Texts["UnableDeleteAlarm"], true);
         }
     }
 
     private async Task SaveAlarmAsync()
     {
-        if (!editor.TryBuild(out var alarm, out var validationError))
+        if (!editor.TryBuild(Texts, out var alarm, out var validationError))
         {
-            statusMessage = validationError;
-            isError = true;
+            ShowStatusMessage(validationError, true);
             return;
         }
 
@@ -330,8 +368,7 @@
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description));
-            statusMessage = editor.IsEditMode ? "Alarm updated." : "Alarm created.";
-            isError = false;
+            ShowStatusMessage(editor.IsEditMode ? Texts["AlarmUpdated"] : Texts["AlarmCreated"], false);
             CloseEditor();
             await LoadAsync();
         }
@@ -344,8 +381,7 @@
                 alarm.Name,
                 alarm.Time.ToString("HH\\:mm"),
                 GetLogDescription(alarm.Description));
-            statusMessage = "Unable to save the alarm.";
-            isError = true;
+            ShowStatusMessage(Texts["UnableSaveAlarm"], true);
         }
     }
 
@@ -364,6 +400,7 @@
     private void ResetEditor()
     {
         editor.Reset();
+        editor.Name = Texts["NewAlarm"];
     }
 
     private void CloseEditor()
@@ -385,20 +422,20 @@
         }
     }
 
-    private static string GetRepeatModeName(RepeatMode mode)
+    private string GetRepeatModeName(RepeatMode mode)
     {
         return mode switch
         {
-            RepeatMode.Never => "Never",
-            RepeatMode.Daily => "Daily",
-            RepeatMode.Weekdays => "Weekdays",
-            RepeatMode.Weekends => "Weekends",
-            RepeatMode.CustomDays => "Custom days",
+            RepeatMode.Never => Texts["RepeatNever"],
+            RepeatMode.Daily => Texts["RepeatDaily"],
+            RepeatMode.Weekdays => Texts["RepeatWeekdays"],
+            RepeatMode.Weekends => Texts["RepeatWeekends"],
+            RepeatMode.CustomDays => Texts["RepeatCustomDays"],
             _ => mode.ToString()
         };
     }
 
-    private static string GetRepeatLabel(AlarmDefinition alarm)
+    private string GetRepeatLabel(AlarmDefinition alarm)
     {
         return alarm.RepeatMode switch
         {
@@ -407,11 +444,11 @@
         };
     }
 
-    private static string FormatOccurrence(DateTimeOffset? occurrence)
+    private string FormatOccurrence(DateTimeOffset? occurrence)
     {
         return occurrence.HasValue
             ? occurrence.Value.LocalDateTime.ToString("ddd MM/dd HH:mm")
-            : "Not scheduled";
+            : Texts["NotScheduled"];
     }
 
     private static string GetLogDescription(string? description)
@@ -424,15 +461,47 @@
         return DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz");
     }
 
+    private void ShowStatusMessage(string message, bool error)
+    {
+        statusMessageCts?.Cancel();
+        statusMessageCts?.Dispose();
+
+        statusMessage = message;
+        isError = error;
+
+        statusMessageCts = new CancellationTokenSource();
+        _ = DismissStatusMessageAfterDelayAsync(statusMessageCts.Token);
+    }
+
+    private async Task DismissStatusMessageAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            await InvokeAsync(DismissStatusMessageAsync);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private Task DismissStatusMessageAsync()
+    {
+        statusMessageCts?.Cancel();
+        statusMessageCts?.Dispose();
+        statusMessageCts = null;
+        statusMessage = string.Empty;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
     private sealed class AlarmEditorModel
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        [Required(ErrorMessage = "Name is required.")]
         [StringLength(80)]
-        public string Name { get; set; } = "New alarm";
+        public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Time is required.")]
         public string TimeText { get; set; } = "07:00";
 
         [StringLength(160)]
@@ -466,7 +535,7 @@
         public void Reset()
         {
             Id = Guid.NewGuid();
-            Name = "New alarm";
+            Name = string.Empty;
             TimeText = "07:00";
             Description = string.Empty;
             IsEnabled = true;
@@ -479,20 +548,38 @@
             CreatedUtc = DateTimeOffset.UtcNow;
         }
 
-        public bool TryBuild(out AlarmDefinition alarm, out string validationError)
+        public bool TryBuild(UiTextService texts, out AlarmDefinition alarm, out string validationError)
         {
             validationError = string.Empty;
             alarm = new AlarmDefinition();
 
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                validationError = texts["ValidationNameRequired"];
+                return false;
+            }
+
+            if (Name.Trim().Length > 80)
+            {
+                validationError = texts["ValidationNameTooLong"];
+                return false;
+            }
+
             if (!TimeOnly.TryParse(TimeText, out var time))
             {
-                validationError = "Time must use the HH:mm format.";
+                validationError = texts["ValidationTimeFormat"];
+                return false;
+            }
+
+            if (Description.Trim().Length > 160)
+            {
+                validationError = texts["ValidationDescriptionTooLong"];
                 return false;
             }
 
             if (RepeatMode == RepeatMode.CustomDays && Days == WeekdaySelection.None)
             {
-                validationError = "Select at least one day for a custom repeat rule.";
+                validationError = texts["ValidationSelectDay"];
                 return false;
             }
 

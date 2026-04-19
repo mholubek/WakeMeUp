@@ -13,6 +13,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<UiTextService>();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionDirectory))
     .SetApplicationName("WakeMeUp");

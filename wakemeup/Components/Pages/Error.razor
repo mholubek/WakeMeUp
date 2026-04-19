@@ -1,22 +1,23 @@
 @page "/Error"
 @using System.Diagnostics
+@inject UiTextService Texts
 
-<PageTitle>Application error</PageTitle>
+<PageTitle>@Texts["PageTitleError"]</PageTitle>
 
 <div class="panel-card panel-card-wide">
     <div class="section-heading">
         <div>
-            <p class="section-kicker">Error</p>
-            <h2>An error occurred while processing your request</h2>
+            <p class="section-kicker">@Texts["Error"]</p>
+            <h2>@Texts["ErrorHeadline"]</h2>
         </div>
     </div>
 
     @if (ShowRequestId)
     {
-        <p><strong>Request ID:</strong> <code>@RequestId</code></p>
+        <p><strong>@Texts["RequestId"]:</strong> <code>@RequestId</code></p>
     }
 
-    <p>If the problem persists, check the container logs and the Home Assistant connection setup.</p>
+    <p>@Texts["ErrorHelp"]</p>
 </div>
 
 @code{

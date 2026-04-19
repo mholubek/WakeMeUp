@@ -1,16 +1,17 @@
 @page "/not-found"
 @layout MainLayout
+@inject UiTextService Texts
 
-<PageTitle>Page not found</PageTitle>
+<PageTitle>@Texts["PageTitleNotFound"]</PageTitle>
 
 <div class="panel-card panel-card-wide">
     <div class="section-heading">
         <div>
             <p class="section-kicker">404</p>
-            <h2>Page not found</h2>
+            <h2>@Texts["NotFoundHeadline"]</h2>
         </div>
     </div>
 
-    <p>Check the address or return to the alarm overview.</p>
-    <a class="btn btn-primary" href="/">Back to dashboard</a>
+    <p>@Texts["NotFoundText"]</p>
+    <a class="btn btn-primary" href="/">@Texts["BackToDashboard"]</a>
 </div>

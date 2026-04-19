@@ -1,14 +1,16 @@
+@inject UiTextService Texts
+
 <aside class="sidebar-shell">
     <div class="sidebar-mobile-bar">
         <div class="brand-block">
             <div class="brand-mark">WU</div>
             <div>
-                <p class="brand-title">WakeMeUp</p>
-                <p class="brand-copy">Alarms</p>
+                <p class="brand-title">@Texts["AppName"]</p>
+                <p class="brand-copy">@Texts["BrandSection"]</p>
             </div>
         </div>
 
-        <button class="menu-toggle" type="button" @onclick="ToggleMenu" aria-label="Open menu">
+        <button class="menu-toggle" type="button" @onclick="ToggleMenu" aria-label="@Texts["OpenMenu"]">
             <span></span>
             <span></span>
             <span></span>
@@ -19,17 +21,17 @@
         <div class="brand-block sidebar-brand-desktop">
             <div class="brand-mark">WU</div>
             <div>
-                <p class="brand-title">WakeMeUp</p>
-                <p class="brand-copy">Alarms</p>
+                <p class="brand-title">@Texts["AppName"]</p>
+                <p class="brand-copy">@Texts["BrandSection"]</p>
             </div>
         </div>
 
         <nav class="nav flex-column nav-pills gap-2">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="CloseMenu">
-                Alarm overview
+                @Texts["NavAlarmOverview"]
             </NavLink>
             <NavLink class="nav-link" href="settings" @onclick="CloseMenu">
-                Settings
+                @Texts["NavSettings"]
             </NavLink>
         </nav>
     </div>
