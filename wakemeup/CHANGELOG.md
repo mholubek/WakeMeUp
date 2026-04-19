@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7
+
+- Added a versioned JSON API for alarms, metadata, and quick enable or disable actions
+- Added shared alarm mutation and validation logic for both the Blazor UI and future external clients
+- Prepared the backend for a future custom HACS card through ingress-friendly API endpoints
+- Updated repository and add-on documentation to cover languages, API endpoints, storage, and HACS card preparation
+
 ## 0.1.6
 
 - Added full UI language selection with persisted app language settings

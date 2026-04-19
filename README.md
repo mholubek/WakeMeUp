@@ -2,7 +2,7 @@
 
 This repository contains the Home Assistant add-on for WakeMeUp.
 
-WakeMeUp is an alarm application built with ASP.NET 10 Blazor Server. It allows users to create alarms with repeat rules and emits the `wakemeup_alarm_triggered` event when an alarm becomes due.
+WakeMeUp is a Home Assistant alarm application built with ASP.NET 10 Blazor Server. It lets users create one-time or repeating alarms, stores data in SQLite, and emits the `wakemeup_alarm_triggered` event when an alarm becomes due.
 
 This project is fully vibe coded.
 
@@ -15,6 +15,142 @@ This project is fully vibe coded.
 - [wakemeup](./wakemeup) - the WakeMeUp add-on
 - [LICENSE](./LICENSE) - repository license
 
+## What WakeMeUp Does
+
+- Manages multiple alarms
+- Supports one-time and repeating alarms
+- Supports repeat modes:
+  - Never
+  - Daily
+  - Weekdays
+  - Weekends
+  - Custom days
+- Publishes a Home Assistant event when an alarm fires
+- Stores alarms and app settings in SQLite
+- Runs frontend and backend in a single container
+- Supports light, dark, and automatic themes
+- Supports persisted UI language selection
+
+WakeMeUp does not perform the final wake-up automation itself. Home Assistant automations should react to the emitted event.
+
+## Languages
+
+WakeMeUp currently includes these UI languages:
+
+- English
+- German
+- French
+- Spanish
+- Portuguese
+- Italian
+- Slovak
+- Czech
+- Polish
+- Ukrainian
+- Greek
+- Esperanto
+- Klingon
+
+The selected language is stored in the add-on database and is also exposed through the JSON API for future external clients such as a custom HACS card.
+
+## Event
+
+All alarms emit the same Home Assistant event:
+
+`wakemeup_alarm_triggered`
+
+Event payload includes:
+
+- `name`
+- `time`
+- `description`
+
+If an alarm has no description, WakeMeUp sends an empty string.
+
+## Storage
+
+WakeMeUp uses SQLite.
+
+In Home Assistant add-on mode, the database is stored in:
+
+`/data/wakemeup.db`
+
+That location is persistent across add-on restarts and updates.
+
+ASP.NET Data Protection keys are also persisted under `/data/.aspnet/DataProtection-Keys` so add-on restarts do not break antiforgery/session state.
+
+## Home Assistant Add-on Notes
+
+- Ingress is enabled
+- Home Assistant API access is enabled
+- The add-on uses the Supervisor-provided Home Assistant Core endpoint
+- Event publishing uses the internal Home Assistant endpoint via Supervisor
+- No user-facing add-on options are currently exposed in `config.yaml`
+
+Repository URL:
+
+`https://github.com/mholubek/WakeMeUp`
+
+To add it manually in Home Assistant:
+
+1. Open `Settings > Add-ons > Add-on Store`
+2. Open the top-right menu
+3. Choose `Repositories`
+4. Add `https://github.com/mholubek/WakeMeUp`
+
+## JSON API
+
+WakeMeUp already exposes a JSON API intended for future clients such as a custom HACS card.
+
+Available endpoints:
+
+- `GET /api/v1/alarms`
+- `GET /api/v1/alarms/{id}`
+- `POST /api/v1/alarms`
+- `PUT /api/v1/alarms/{id}`
+- `PATCH /api/v1/alarms/{id}/enabled`
+- `DELETE /api/v1/alarms/{id}`
+- `GET /api/v1/meta`
+- `GET /health`
+
+Alarm responses include:
+
+- `id`
+- `name`
+- `description`
+- `time`
+- `isEnabled`
+- `repeatMode`
+- `days`
+- `nextTriggerLocal`
+- `createdUtc`
+- `lastTriggeredUtc`
+- `lastResultMessage`
+
+Metadata responses include:
+
+- `timeZoneId`
+- `timeZoneDisplayName`
+- `currentLanguage`
+- `currentTheme`
+- `currentLocalTime`
+- `supportedLanguages`
+- `repeatModes`
+- `weekdays`
+
+Validation failures return structured JSON error details so clients can surface field-specific errors.
+
+## HACS Card Preparation
+
+The backend is already prepared for a future custom HACS dashboard card.
+
+Current assumptions for that card:
+
+- It will run inside the Home Assistant dashboard
+- It will access WakeMeUp through the same Home Assistant ingress base
+- It can use the JSON API above for listing, creating, editing, deleting, and enabling alarms
+- It should keep its own localized UI strings while reading the currently selected app language from `/api/v1/meta`
+
 ## Add-on Folder
 
 The add-on itself lives in [wakemeup](./wakemeup) and includes:
@@ -26,36 +162,6 @@ The add-on itself lives in [wakemeup](./wakemeup) and includes:
 - `icon.png`
 - `logo.png`
 - the ASP.NET application source code
-
-## Features
-
-- Multiple alarms
-- One-time and repeating alarms
-- Repeat modes:
-  - Never
-  - Daily
-  - Weekdays
-  - Weekends
-  - Custom days
-- Home Assistant event publishing
-- SQLite persistence
-- Light, dark, and automatic themes
-- Frontend and backend in a single container
-
-## Event
-
-All alarms emit the same Home Assistant event:
-
-`wakemeup_alarm_triggered`
-
-Event payload includes:
-
-- `alarmId`
-- `alarmName`
-- `description`
-- `repeatMode`
-- `scheduledLocal`
-- `triggeredUtc`
 
 ## Local Development
 
@@ -70,23 +176,6 @@ Or build the project directly:
 ```bash
 dotnet build wakemeup/WakeMeUp.csproj
 ```
-
-## Home Assistant
-
-This repository is prepared to act as a Home Assistant add-on repository.
-
-Repository URL:
-
-`https://github.com/mholubek/WakeMeUp`
-
-The add-on metadata is defined in [repository.yaml](./repository.yaml), while the actual add-on files are stored in [wakemeup](./wakemeup).
-
-To add it manually in Home Assistant:
-
-1. Open `Settings > Add-ons > Add-on Store`
-2. Open the top-right menu
-3. Choose `Repositories`
-4. Add `https://github.com/mholubek/WakeMeUp`
 
 ## License
 

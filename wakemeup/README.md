@@ -4,9 +4,77 @@ WakeMeUp is a Home Assistant alarm add-on that lets users create alarms with rep
 
 The add-on runs as a single ASP.NET 10 Blazor Server application and stores its data in SQLite.
 
-See [DOCS.md](./DOCS.md) for usage details.
+## Features
+
+- Multiple alarms
+- One-time and repeating alarms
+- Repeat modes:
+  - Never
+  - Daily
+  - Weekdays
+  - Weekends
+  - Custom days
+- Home Assistant event publishing
+- SQLite persistence
+- Light, dark, and automatic themes
+- Persisted UI language selection
+- JSON API for future clients such as a custom HACS card
+
+## Included Languages
+
+- English
+- German
+- French
+- Spanish
+- Portuguese
+- Italian
+- Slovak
+- Czech
+- Polish
+- Ukrainian
+- Greek
+- Esperanto
+- Klingon
+
+## Event
+
+All alarms emit:
+
+`wakemeup_alarm_triggered`
+
+Payload fields:
+
+- `name`
+- `time`
+- `description`
+
+If no description is set, the add-on sends an empty string.
+
+## Storage
+
+In Home Assistant add-on mode, SQLite data is stored in:
+
+`/data/wakemeup.db`
+
+## API
+
+WakeMeUp exposes these JSON API endpoints:
+
+- `GET /api/v1/alarms`
+- `GET /api/v1/alarms/{id}`
+- `POST /api/v1/alarms`
+- `PUT /api/v1/alarms/{id}`
+- `PATCH /api/v1/alarms/{id}/enabled`
+- `DELETE /api/v1/alarms/{id}`
+- `GET /api/v1/meta`
+
+The API is intended for future clients such as a custom HACS dashboard card.
+
+## Artwork
 
 Included add-on artwork:
 
 - `icon.png` for the add-on list tile
 - `logo.png` for the detailed add-on view
+
+See [DOCS.md](./DOCS.md) for add-on usage details.

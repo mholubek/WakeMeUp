@@ -4,6 +4,7 @@
 @inject IJSRuntime JS
 @inject ILogger<Home> Logger
 @inject UiTextService Texts
+@inject AlarmMutationService AlarmMutations
 
 <PageTitle>@Texts["PageTitleHome"]</PageTitle>
 
@@ -280,25 +281,16 @@
     {
         try
         {
-            var wasEnabled = alarm.IsEnabled;
-            alarm.IsEnabled = isEnabled;
-
-            if (!wasEnabled && isEnabled && alarm.RepeatMode == RepeatMode.Never)
-            {
-                alarm.LastProcessedOccurrenceUtc = null;
-                alarm.LastTriggeredUtc = null;
-                alarm.LastResultMessage = string.Empty;
-            }
-
-            await Store.SaveAlarmAsync(alarm);
+            var updatedAlarm = AlarmMutations.ApplyEnabledState(alarm, isEnabled);
+            await Store.SaveAlarmAsync(updatedAlarm);
             Logger.LogInformation(
                 "[{LoggedAt}] Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
                 GetLogTimestamp(),
-                alarm.Name,
-                alarm.Time.ToString("HH\\:mm"),
-                GetLogDescription(alarm.Description),
-                alarm.IsEnabled);
-            ShowStatusMessage(alarm.IsEnabled ? Texts["AlarmEnabled"] : Texts["AlarmDisabled"], false);
+                updatedAlarm.Name,
+                updatedAlarm.Time.ToString("HH\\:mm"),
+                GetLogDescription(updatedAlarm.Description),
+                updatedAlarm.IsEnabled);
+            ShowStatusMessage(updatedAlarm.IsEnabled ? Texts["AlarmEnabled"] : Texts["AlarmDisabled"], false);
             await LoadAsync();
         }
         catch (Exception exception)
@@ -353,9 +345,9 @@
 
     private async Task SaveAlarmAsync()
     {
-        if (!editor.TryBuild(Texts, out var alarm, out var validationError))
+        if (!editor.TryBuild(AlarmMutations, out var alarm, out var validationError))
         {
-            ShowStatusMessage(validationError, true);
+            ShowStatusMessage(GetValidationMessage(validationError), true);
             return;
         }
 
@@ -461,6 +453,19 @@
         return DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz");
     }
 
+    private string GetValidationMessage(AlarmValidationError validationError)
+    {
+        return validationError.Code switch
+        {
+            "name_required" => Texts["ValidationNameRequired"],
+            "name_too_long" => Texts["ValidationNameTooLong"],
+            "time_format_invalid" => Texts["ValidationTimeFormat"],
+            "description_too_long" => Texts["ValidationDescriptionTooLong"],
+            "custom_days_required" => Texts["ValidationSelectDay"],
+            _ => validationError.Message
+        };
+    }
+
     private void ShowStatusMessage(string message, bool error)
     {
         statusMessageCts?.Cancel();
@@ -508,6 +513,7 @@
         public string Description { get; set; } = string.Empty;
 
         public bool IsEnabled { get; set; } = true;
+        public bool OriginalIsEnabled { get; set; } = true;
         public RepeatMode RepeatMode { get; set; } = RepeatMode.Never;
         public WeekdaySelection Days { get; set; } = WeekdaySelection.None;
         public bool IsEditMode { get; set; }
@@ -523,6 +529,7 @@
             TimeText = alarm.Time.ToString("HH\\:mm");
             Description = alarm.Description;
             IsEnabled = alarm.IsEnabled;
+            OriginalIsEnabled = alarm.IsEnabled;
             RepeatMode = alarm.RepeatMode;
             Days = alarm.Days;
             IsEditMode = true;
@@ -539,6 +546,7 @@
             TimeText = "07:00";
             Description = string.Empty;
             IsEnabled = true;
+            OriginalIsEnabled = true;
             RepeatMode = RepeatMode.Never;
             Days = WeekdaySelection.None;
             IsEditMode = false;
@@ -548,55 +556,43 @@
             CreatedUtc = DateTimeOffset.UtcNow;
         }
 
-        public bool TryBuild(UiTextService texts, out AlarmDefinition alarm, out string validationError)
+        public bool TryBuild(AlarmMutationService alarmMutations, out AlarmDefinition alarm, out AlarmValidationError validationError)
         {
-            validationError = string.Empty;
+            validationError = new AlarmValidationError(string.Empty, string.Empty, string.Empty);
             alarm = new AlarmDefinition();
+            var existingAlarm = IsEditMode
+                ? new AlarmDefinition
+                {
+                    Id = Id,
+                    Name = Name,
+                    Description = Description,
+                    Time = TimeOnly.TryParse(TimeText, out var existingTime) ? existingTime : new TimeOnly(7, 0),
+                    IsEnabled = OriginalIsEnabled,
+                    RepeatMode = RepeatMode,
+                    Days = Days,
+                    CreatedUtc = CreatedUtc,
+                    LastProcessedOccurrenceUtc = LastProcessedOccurrenceUtc,
+                    LastTriggeredUtc = LastTriggeredUtc,
+                    LastResultMessage = LastResultMessage
+                }
+                : null;
 
-            if (string.IsNullOrWhiteSpace(Name))
+            if (!alarmMutations.TryBuild(
+                    new AlarmMutationInput(
+                        Id,
+                        Name,
+                        Description,
+                        TimeText,
+                        IsEnabled,
+                        RepeatMode,
+                        Days),
+                    existingAlarm,
+                    out alarm,
+                    out var error))
             {
-                validationError = texts["ValidationNameRequired"];
+                validationError = error!;
                 return false;
             }
-
-            if (Name.Trim().Length > 80)
-            {
-                validationError = texts["ValidationNameTooLong"];
-                return false;
-            }
-
-            if (!TimeOnly.TryParse(TimeText, out var time))
-            {
-                validationError = texts["ValidationTimeFormat"];
-                return false;
-            }
-
-            if (Description.Trim().Length > 160)
-            {
-                validationError = texts["ValidationDescriptionTooLong"];
-                return false;
-            }
-
-            if (RepeatMode == RepeatMode.CustomDays && Days == WeekdaySelection.None)
-            {
-                validationError = texts["ValidationSelectDay"];
-                return false;
-            }
-
-            alarm = new AlarmDefinition
-            {
-                Id = Id,
-                Name = Name.Trim(),
-                Description = Description.Trim(),
-                Time = time,
-                IsEnabled = IsEnabled,
-                RepeatMode = RepeatMode,
-                Days = Days,
-                CreatedUtc = CreatedUtc,
-                LastProcessedOccurrenceUtc = LastProcessedOccurrenceUtc,
-                LastTriggeredUtc = LastTriggeredUtc,
-                LastResultMessage = LastResultMessage
-            };
 
             return true;
         }
