@@ -8,6 +8,7 @@ public interface IAlarmStore
     Task<IReadOnlyList<AlarmDefinition>> GetAlarmsAsync(CancellationToken cancellationToken = default);
     Task<AppSettings> GetSettingsAsync(CancellationToken cancellationToken = default);
     Task<AlarmDefinition> SaveAlarmAsync(AlarmDefinition alarm, CancellationToken cancellationToken = default);
+    Task SaveAlarmsAsync(IEnumerable<AlarmDefinition> alarms, CancellationToken cancellationToken = default);
     Task DeleteAlarmAsync(Guid alarmId, CancellationToken cancellationToken = default);
     Task SaveSettingsAsync(AppSettings settings, CancellationToken cancellationToken = default);
 }

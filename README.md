@@ -21,6 +21,7 @@ This project is fully vibe coded.
 
 - Manages multiple alarms
 - Supports one-time and repeating alarms
+- Supports bulk enable and disable actions for all alarms from the add-on UI
 - Supports repeat modes:
   - Never
   - Daily
@@ -34,6 +35,8 @@ This project is fully vibe coded.
 - Supports persisted UI language selection
 
 WakeMeUp does not perform the final wake-up automation itself. Home Assistant automations should react to the emitted event.
+
+The add-on UI also includes bulk enable and disable actions for all alarms directly in the sidebar menu.
 
 ## Languages
 

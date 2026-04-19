@@ -5,6 +5,7 @@
 @inject ILogger<Home> Logger
 @inject UiTextService Texts
 @inject AlarmMutationService AlarmMutations
+@inject WakeMeUp.Domain.AppState AppState
 
 <PageTitle>@Texts["PageTitleHome"]</PageTitle>
 
@@ -210,6 +211,8 @@
     </div>
 }
 
+@implements IDisposable
+
 @code {
     private (WeekdaySelection Flag, string ShortName)[] weekdays = [];
     private readonly AlarmEditorModel editor = new();
@@ -224,6 +227,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        AppState.BulkAlarmToggleRequested += HandleBulkAlarmToggleAsync;
         BuildWeekdays();
         await LoadAsync();
     }
@@ -258,7 +262,61 @@
         isLoading = true;
         BuildWeekdays();
         alarms = (await Store.GetAlarmsAsync()).OrderBy(x => x.Time).ToList();
+        AppState.Alarms = alarms;
         isLoading = false;
+    }
+
+    private async Task HandleBulkAlarmToggleAsync(bool isEnabled)
+    {
+        var alarmsToUpdate = alarms
+            .Where(alarm => alarm.IsEnabled != isEnabled)
+            .ToList();
+
+        if (alarmsToUpdate.Count == 0)
+        {
+            ShowStatusMessage(
+                isEnabled ? Texts["AllAlarmsAlreadyEnabled"] : Texts["AllAlarmsAlreadyDisabled"],
+                false);
+            return;
+        }
+
+        try
+        {
+            var updatedAlarms = new List<AlarmDefinition>(alarmsToUpdate.Count);
+
+            foreach (var alarm in alarmsToUpdate)
+            {
+                var updatedAlarm = AlarmMutations.ApplyEnabledState(alarm, isEnabled);
+                updatedAlarms.Add(updatedAlarm);
+                ReplaceAlarmInList(updatedAlarm);
+            }
+
+            await Store.SaveAlarmsAsync(updatedAlarms);
+
+            foreach (var updatedAlarm in updatedAlarms)
+            {
+                Logger.LogInformation(
+                    "[{LoggedAt}] Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
+                    GetLogTimestamp(),
+                    updatedAlarm.Name,
+                    updatedAlarm.Time.ToString("HH\\:mm"),
+                    GetLogDescription(updatedAlarm.Description),
+                    updatedAlarm.IsEnabled);
+            }
+
+            ShowStatusMessage(
+                isEnabled ? Texts["AllAlarmsEnabled"] : Texts["AllAlarmsDisabled"],
+                false);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "[{LoggedAt}] Error updating alarms in bulk. Enabled={IsEnabled}",
+                GetLogTimestamp(),
+                isEnabled);
+            ShowStatusMessage(Texts["UnableUpdateAlarms"], true);
+        }
     }
 
     private void StartCreate()
@@ -282,6 +340,7 @@
         {
             var updatedAlarm = AlarmMutations.ApplyEnabledState(alarm, isEnabled);
             await Store.SaveAlarmAsync(updatedAlarm);
+            ReplaceAlarmInList(updatedAlarm);
             Logger.LogInformation(
                 "[{LoggedAt}] Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
                 GetLogTimestamp(),
@@ -290,7 +349,6 @@
                 GetLogDescription(updatedAlarm.Description),
                 updatedAlarm.IsEnabled);
             ShowStatusMessage(updatedAlarm.IsEnabled ? Texts["AlarmEnabled"] : Texts["AlarmDisabled"], false);
-            await LoadAsync();
         }
         catch (Exception exception)
         {
@@ -477,6 +535,20 @@
         _ = DismissStatusMessageAfterDelayAsync(statusMessageCts.Token);
     }
 
+    private void ReplaceAlarmInList(AlarmDefinition updatedAlarm)
+    {
+        var index = alarms.FindIndex(existingAlarm => existingAlarm.Id == updatedAlarm.Id);
+        if (index < 0)
+        {
+            return;
+        }
+
+        alarms[index] = updatedAlarm;
+        alarms = alarms.OrderBy(existingAlarm => existingAlarm.Time).ToList();
+        AppState.Alarms = alarms;
+        StateHasChanged();
+    }
+
     private async Task DismissStatusMessageAfterDelayAsync(CancellationToken cancellationToken)
     {
         try
@@ -497,6 +569,13 @@
         statusMessage = string.Empty;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        AppState.BulkAlarmToggleRequested -= HandleBulkAlarmToggleAsync;
+        statusMessageCts?.Cancel();
+        statusMessageCts?.Dispose();
     }
 
     private sealed class AlarmEditorModel

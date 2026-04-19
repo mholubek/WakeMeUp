@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Added bulk enable and disable actions directly in the add-on UI sidebar
+- Added shared app state wiring so bulk alarm actions can be triggered from the navigation and applied on the overview page
+- Added batch SQLite alarm saving to persist bulk enable and disable operations efficiently
+
 ## 0.2.0
 
 - Added WakeMeUp Bridge helper entities for Home Assistant automations: a temporary `alarm_triggered` binary sensor plus bulk enable and disable buttons for all alarms

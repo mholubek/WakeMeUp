@@ -139,6 +139,26 @@ a,
     color: var(--wm-sidebar-text);
 }
 
+.sidebar-menu-actions {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.sidebar-menu-link {
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    justify-content: flex-start;
+    text-align: left;
+    font: inherit;
+}
+
+.sidebar-menu-link:hover,
+.sidebar-menu-link:focus {
+    background: var(--wm-sidebar-link-active);
+    color: var(--wm-sidebar-text);
+}
+
 .menu-toggle {
     display: none;
     width: 2.7rem;

@@ -1,4 +1,5 @@
 @inject UiTextService Texts
+@inject WakeMeUp.Domain.AppState AppState
 
 <aside class="sidebar-shell">
     <div class="sidebar-mobile-bar">
@@ -34,6 +35,15 @@
                 @Texts["NavSettings"]
             </NavLink>
         </nav>
+
+        <div class="sidebar-menu-actions">
+            <button type="button" class="nav-link sidebar-menu-link" @onclick="EnableAllAlarmsAsync">
+                @Texts["EnableAllAlarms"]
+            </button>
+            <button type="button" class="nav-link sidebar-menu-link" @onclick="DisableAllAlarmsAsync">
+                @Texts["DisableAllAlarms"]
+            </button>
+        </div>
     </div>
 </aside>
 
@@ -48,5 +58,17 @@
     private void CloseMenu()
     {
         isMenuOpen = false;
+    }
+
+    private async Task EnableAllAlarmsAsync()
+    {
+        CloseMenu();
+        await AppState.RequestBulkAlarmToggleAsync(true);
+    }
+
+    private async Task DisableAllAlarmsAsync()
+    {
+        CloseMenu();
+        await AppState.RequestBulkAlarmToggleAsync(false);
     }
 }

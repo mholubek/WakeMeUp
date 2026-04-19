@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using WakeMeUp.Api;
 using WakeMeUp.Components;
+using WakeMeUp.Domain;
 using WakeMeUp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UiTextService>();
+builder.Services.AddScoped<AppState>();
 builder.Services.AddSingleton<AlarmMutationService>();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionDirectory))

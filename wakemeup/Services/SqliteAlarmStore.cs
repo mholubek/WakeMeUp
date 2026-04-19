@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using System.Data.Common;
 using WakeMeUp.Domain;
 
 namespace WakeMeUp.Services;
@@ -113,35 +114,33 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
         {
             await using var connection = OpenConnection();
             await connection.OpenAsync(cancellationToken);
-
-            var command = connection.CreateCommand();
-            command.CommandText =
-                """
-                INSERT INTO alarms (
-                    id, name, description, time, is_enabled, repeat_mode, days, created_utc,
-                    last_processed_occurrence_utc, last_triggered_utc, last_result_message
-                )
-                VALUES (
-                    $id, $name, $description, $time, $is_enabled, $repeat_mode, $days, $created_utc,
-                    $last_processed_occurrence_utc, $last_triggered_utc, $last_result_message
-                )
-                ON CONFLICT(id) DO UPDATE SET
-                    name = excluded.name,
-                    description = excluded.description,
-                    time = excluded.time,
-                    is_enabled = excluded.is_enabled,
-                    repeat_mode = excluded.repeat_mode,
-                    days = excluded.days,
-                    created_utc = excluded.created_utc,
-                    last_processed_occurrence_utc = excluded.last_processed_occurrence_utc,
-                    last_triggered_utc = excluded.last_triggered_utc,
-                    last_result_message = excluded.last_result_message;
-                """;
-
-            AddAlarmParameters(command, alarm);
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            await SaveAlarmInternalAsync(connection, alarm, transaction: null, cancellationToken);
 
             return alarm;
+        }
+        finally
+        {
+            _mutex.Release();
+        }
+    }
+
+    public async Task SaveAlarmsAsync(IEnumerable<AlarmDefinition> alarms, CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync(cancellationToken);
+        await _mutex.WaitAsync(cancellationToken);
+
+        try
+        {
+            await using var connection = OpenConnection();
+            await connection.OpenAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+            foreach (var alarm in alarms)
+            {
+                await SaveAlarmInternalAsync(connection, alarm, transaction, cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
         }
         finally
         {
@@ -310,6 +309,41 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
     private SqliteConnection OpenConnection()
     {
         return new SqliteConnection($"Data Source={_databasePath}");
+    }
+
+    private static async Task SaveAlarmInternalAsync(
+        SqliteConnection connection,
+        AlarmDefinition alarm,
+        DbTransaction? transaction,
+        CancellationToken cancellationToken)
+    {
+        var command = connection.CreateCommand();
+        command.Transaction = transaction as SqliteTransaction;
+        command.CommandText =
+            """
+            INSERT INTO alarms (
+                id, name, description, time, is_enabled, repeat_mode, days, created_utc,
+                last_processed_occurrence_utc, last_triggered_utc, last_result_message
+            )
+            VALUES (
+                $id, $name, $description, $time, $is_enabled, $repeat_mode, $days, $created_utc,
+                $last_processed_occurrence_utc, $last_triggered_utc, $last_result_message
+            )
+            ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                description = excluded.description,
+                time = excluded.time,
+                is_enabled = excluded.is_enabled,
+                repeat_mode = excluded.repeat_mode,
+                days = excluded.days,
+                created_utc = excluded.created_utc,
+                last_processed_occurrence_utc = excluded.last_processed_occurrence_utc,
+                last_triggered_utc = excluded.last_triggered_utc,
+                last_result_message = excluded.last_result_message;
+            """;
+
+        AddAlarmParameters(command, alarm);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static void AddAlarmParameters(SqliteCommand command, AlarmDefinition alarm)
