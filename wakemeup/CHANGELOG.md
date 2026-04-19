@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.8
+
+- Simplified the alarm enable switch on desktop by removing its frame and duplicate label
+- Increased the alarm enable switch size on desktop and mobile layouts
+- Moved the mobile alarm enable switch into the same row as the alarm time
+- Updated next trigger formatting to follow the selected language and culture
+
 ## 0.1.7
 
 - Added a versioned JSON API for alarms, metadata, and quick enable or disable actions
