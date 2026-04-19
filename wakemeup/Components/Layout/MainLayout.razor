@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @inject IAlarmStore Store
+@inject IJSRuntime JS
 @inject UiTextService Texts
 @implements IDisposable
 
@@ -20,11 +21,31 @@
 </div>
 
 @code {
+    private AppSettings settings = new();
+    private bool languageInitializationPending;
+
     protected override async Task OnInitializedAsync()
     {
         Texts.Changed += HandleTextsChanged;
-        var settings = await Store.GetSettingsAsync();
+        settings = await Store.GetSettingsAsync();
         Texts.SetLanguage(settings.Language);
+        languageInitializationPending = !settings.LanguageInitialized;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!languageInitializationPending)
+        {
+            return;
+        }
+
+        languageInitializationPending = false;
+
+        var preferredLanguage = await JS.InvokeAsync<string?>("wakeMeUpTheme.getPreferredLanguage");
+        settings.Language = Texts.ResolveAppLanguage(preferredLanguage);
+        settings.LanguageInitialized = true;
+        Texts.SetLanguage(settings.Language);
+        await Store.SaveSettingsAsync(settings);
     }
 
     private void HandleTextsChanged()

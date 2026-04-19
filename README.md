@@ -13,6 +13,8 @@ This project is fully vibe coded.
 
 - [repository.yaml](./repository.yaml) - Home Assistant add-on repository metadata
 - [wakemeup](./wakemeup) - the WakeMeUp add-on
+- [custom_components/wakemeup_bridge](./custom_components/wakemeup_bridge) - optional Home Assistant bridge integration for stable Lovelace API routes
+- [docs/wakemeup-bridge.md](./docs/wakemeup-bridge.md) - install and migration notes for the bridge and Lovelace card
 - [LICENSE](./LICENSE) - repository license
 
 ## What WakeMeUp Does
@@ -147,9 +149,28 @@ The backend is already prepared for a future custom HACS dashboard card.
 Current assumptions for that card:
 
 - It will run inside the Home Assistant dashboard
-- It will access WakeMeUp through the same Home Assistant ingress base
-- It can use the JSON API above for listing, creating, editing, deleting, and enabling alarms
-- It should keep its own localized UI strings while reading the currently selected app language from `/api/v1/meta`
+- It can use either the add-on JSON API directly or the stable Home Assistant bridge routes
+- It should keep its own localized UI strings while reading the currently selected app language from `/api/wakemeup/meta` or `/api/v1/meta`
+
+## WakeMeUp Bridge
+
+This repository also includes an optional companion Home Assistant custom integration:
+
+- [custom_components/wakemeup_bridge](./custom_components/wakemeup_bridge)
+
+The bridge exposes stable authenticated Home Assistant endpoints:
+
+- `GET /api/wakemeup/meta`
+- `GET /api/wakemeup/alarms`
+- `POST /api/wakemeup/alarms`
+- `GET /api/wakemeup/alarms/{id}`
+- `PUT /api/wakemeup/alarms/{id}`
+- `DELETE /api/wakemeup/alarms/{id}`
+- `PATCH /api/wakemeup/alarms/{id}/enabled`
+
+This lets a Lovelace card call WakeMeUp through the normal Home Assistant frontend origin without knowing the add-on ingress URL.
+
+See [docs/wakemeup-bridge.md](./docs/wakemeup-bridge.md) for installation and the minimal frontend migration steps.
 
 ## Add-on Folder
 

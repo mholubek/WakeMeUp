@@ -453,6 +453,78 @@ public sealed class UiTextService
         Changed?.Invoke();
     }
 
+    public AppLanguage ResolveAppLanguage(string? languageTag)
+    {
+        if (string.IsNullOrWhiteSpace(languageTag))
+        {
+            return AppLanguage.English;
+        }
+
+        var normalized = languageTag.Trim().ToLowerInvariant();
+
+        if (normalized.StartsWith("de"))
+        {
+            return AppLanguage.German;
+        }
+
+        if (normalized.StartsWith("fr"))
+        {
+            return AppLanguage.French;
+        }
+
+        if (normalized.StartsWith("es"))
+        {
+            return AppLanguage.Spanish;
+        }
+
+        if (normalized.StartsWith("pt"))
+        {
+            return AppLanguage.Portuguese;
+        }
+
+        if (normalized.StartsWith("it"))
+        {
+            return AppLanguage.Italian;
+        }
+
+        if (normalized.StartsWith("sk"))
+        {
+            return AppLanguage.Slovak;
+        }
+
+        if (normalized.StartsWith("cs"))
+        {
+            return AppLanguage.Czech;
+        }
+
+        if (normalized.StartsWith("pl"))
+        {
+            return AppLanguage.Polish;
+        }
+
+        if (normalized.StartsWith("uk"))
+        {
+            return AppLanguage.Ukrainian;
+        }
+
+        if (normalized.StartsWith("el"))
+        {
+            return AppLanguage.Greek;
+        }
+
+        if (normalized.StartsWith("eo"))
+        {
+            return AppLanguage.Esperanto;
+        }
+
+        if (normalized.StartsWith("tlh"))
+        {
+            return AppLanguage.Klingon;
+        }
+
+        return AppLanguage.English;
+    }
+
     private static void ApplyCulture(AppLanguage language)
     {
         var cultureName = language switch

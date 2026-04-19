@@ -74,6 +74,7 @@
 
     private async Task SaveSettingsAsync()
     {
+        settings.LanguageInitialized = true;
         await Store.SaveSettingsAsync(settings);
         Texts.SetLanguage(settings.Language);
         await ApplyThemeAsync();

@@ -121,10 +121,26 @@ The backend is already prepared for a future custom HACS dashboard card.
 The expected model is:
 
 - the card runs inside the Home Assistant dashboard
-- the card reaches WakeMeUp through the same Home Assistant ingress base
+- the card can call WakeMeUp directly through ingress or through the optional `wakemeup_bridge` custom integration
 - the card uses the JSON API for alarm CRUD and enable/disable actions
-- the card reads the selected app language from `/api/v1/meta`
+- the card reads the selected app language from `/api/v1/meta` or `/api/wakemeup/meta`
 - the card keeps its own localized UI strings
+
+## Optional WakeMeUp Bridge
+
+This repository also includes an optional Home Assistant custom integration named `wakemeup_bridge`.
+
+It exposes stable Home Assistant routes for the Lovelace card:
+
+- `GET /api/wakemeup/meta`
+- `GET /api/wakemeup/alarms`
+- `POST /api/wakemeup/alarms`
+- `GET /api/wakemeup/alarms/{id}`
+- `PUT /api/wakemeup/alarms/{id}`
+- `DELETE /api/wakemeup/alarms/{id}`
+- `PATCH /api/wakemeup/alarms/{id}/enabled`
+
+The bridge proxies these requests to the existing add-on API and keeps the same JSON payloads, so the frontend only needs minimal API base path changes.
 
 ## Notes
 

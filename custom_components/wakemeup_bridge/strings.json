@@ -1,0 +1,14 @@
+{
+  "config": {
+    "flow_title": "WakeMeUp Bridge",
+    "step": {
+      "user": {
+        "title": "WakeMeUp Bridge",
+        "description": "Create a local API bridge for the WakeMeUp add-on."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only one WakeMeUp Bridge integration can be configured."
+    }
+  }
+}

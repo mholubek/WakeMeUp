@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+- Auto-detect the initial app language for new users from Home Assistant first, then from the browser, with English as the fallback
+- Added the optional `wakemeup_bridge` Home Assistant custom integration to expose stable `/api/wakemeup/...` endpoints for Lovelace cards
+- Added bridge installation and Lovelace migration documentation
+
 ## 0.1.8
 
 - Simplified the alarm enable switch on desktop by removing its frame and duplicate label

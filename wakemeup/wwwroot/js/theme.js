@@ -27,6 +27,33 @@
         return null;
     }
 
+    function detectHomeAssistantLanguage() {
+        try {
+            var hostDocument = window.top && window.top.document ? window.top.document : document;
+            var candidates = [
+                hostDocument.documentElement ? hostDocument.documentElement.lang : null,
+                document.documentElement ? document.documentElement.lang : null,
+                hostDocument.body ? hostDocument.body.getAttribute("lang") : null
+            ].filter(Boolean);
+
+            if (candidates.length > 0) {
+                return candidates[0];
+            }
+        } catch (error) {
+            console.debug("WakeMeUp language host detection unavailable.", error);
+        }
+
+        return null;
+    }
+
+    function detectBrowserLanguage() {
+        if (navigator.languages && navigator.languages.length > 0) {
+            return navigator.languages[0];
+        }
+
+        return navigator.language || navigator.userLanguage || "en";
+    }
+
     function detectDeviceTheme() {
         return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
@@ -55,7 +82,10 @@
     }
 
     window.wakeMeUpTheme = {
-        apply: apply
+        apply: apply,
+        getPreferredLanguage: function () {
+            return detectHomeAssistantLanguage() || detectBrowserLanguage() || "en";
+        }
     };
 
     window.wakeMeUpUi = {

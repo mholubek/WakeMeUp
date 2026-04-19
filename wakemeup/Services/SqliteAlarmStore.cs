@@ -79,7 +79,7 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
             await connection.OpenAsync(cancellationToken);
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT theme_mode, language FROM app_settings WHERE id = 1;";
+            command.CommandText = "SELECT theme_mode, language, language_initialized FROM app_settings WHERE id = 1;";
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             if (!await reader.ReadAsync(cancellationToken))
@@ -94,7 +94,8 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
                     : ThemeMode.Auto,
                 Language = Enum.TryParse<AppLanguage>(Convert.ToString(reader.GetValue(1)), out var language)
                     ? language
-                    : AppLanguage.English
+                    : AppLanguage.English,
+                LanguageInitialized = !reader.IsDBNull(2) && reader.GetInt64(2) == 1
             };
         }
         finally
@@ -182,15 +183,17 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
             var command = connection.CreateCommand();
             command.CommandText =
                 """
-                INSERT INTO app_settings (id, theme_mode, language)
-                VALUES (1, $theme_mode, $language)
+                INSERT INTO app_settings (id, theme_mode, language, language_initialized)
+                VALUES (1, $theme_mode, $language, $language_initialized)
                 ON CONFLICT(id) DO UPDATE SET
                     theme_mode = excluded.theme_mode,
-                    language = excluded.language;
+                    language = excluded.language,
+                    language_initialized = excluded.language_initialized;
                 """;
 
             command.Parameters.AddWithValue("$theme_mode", settings.ThemeMode.ToString());
             command.Parameters.AddWithValue("$language", settings.Language.ToString());
+            command.Parameters.AddWithValue("$language_initialized", settings.LanguageInitialized ? 1 : 0);
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
         finally
@@ -242,12 +245,14 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
                 CREATE TABLE IF NOT EXISTS app_settings (
                     id INTEGER PRIMARY KEY CHECK (id = 1),
                     theme_mode TEXT NOT NULL,
-                    language TEXT NOT NULL DEFAULT 'English'
+                    language TEXT NOT NULL DEFAULT 'English',
+                    language_initialized INTEGER NOT NULL DEFAULT 0
                 );
                 """;
 
             await command.ExecuteNonQueryAsync(cancellationToken);
             await EnsureColumnExistsAsync(connection, "app_settings", "language", "TEXT NOT NULL DEFAULT 'English'", cancellationToken);
+            await EnsureColumnExistsAsync(connection, "app_settings", "language_initialized", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
             await SeedDefaultsAsync(connection, cancellationToken);
 
             _initialized = true;
@@ -268,9 +273,10 @@ public sealed class SqliteAlarmStore(IWebHostEnvironment environment, ILogger<Sq
         if (settingsCount == 0)
         {
             var insertSettings = connection.CreateCommand();
-            insertSettings.CommandText = "INSERT INTO app_settings (id, theme_mode, language) VALUES (1, $theme_mode, $language);";
+            insertSettings.CommandText = "INSERT INTO app_settings (id, theme_mode, language, language_initialized) VALUES (1, $theme_mode, $language, $language_initialized);";
             insertSettings.Parameters.AddWithValue("$theme_mode", ThemeMode.Auto.ToString());
             insertSettings.Parameters.AddWithValue("$language", AppLanguage.English.ToString());
+            insertSettings.Parameters.AddWithValue("$language_initialized", 0);
             await insertSettings.ExecuteNonQueryAsync(cancellationToken);
         }
     }
