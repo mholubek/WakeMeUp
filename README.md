@@ -179,8 +179,8 @@ dotnet build wakemeup/WakeMeUp.csproj
 
 ## License
 
-This project uses the PolyForm Noncommercial License 1.0.0.
+This project uses the MIT License.
 
-You can use it, modify it, and share it for non-commercial purposes, but selling it or using it commercially is not allowed.
+You can use it, modify it, share it, and use it commercially as long as the license notice is preserved.
 
 See [LICENSE](./LICENSE) for details.
