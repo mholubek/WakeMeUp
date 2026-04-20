@@ -14,6 +14,7 @@ public sealed class InMemoryAlarmStore : IAlarmStore
     private readonly List<AlarmDefinition> _alarms = [];
     private AppSettings _settings = new();
 
+    public int GetAlarmsCalls { get; private set; }
     public int SaveAlarmsCalls { get; private set; }
 
     public InMemoryAlarmStore(IEnumerable<AlarmDefinition>? alarms = null, AppSettings? settings = null)
@@ -38,6 +39,7 @@ public sealed class InMemoryAlarmStore : IAlarmStore
                 LanguageInitialized = settings.LanguageInitialized
             };
 
+        GetAlarmsCalls = 0;
         SaveAlarmsCalls = 0;
     }
 
@@ -45,7 +47,10 @@ public sealed class InMemoryAlarmStore : IAlarmStore
         => Task.FromResult(new AppState());
 
     public Task<IReadOnlyList<AlarmDefinition>> GetAlarmsAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult<IReadOnlyList<AlarmDefinition>>(_alarms.Select(Clone).ToList());
+    {
+        GetAlarmsCalls++;
+        return Task.FromResult<IReadOnlyList<AlarmDefinition>>(_alarms.Select(Clone).ToList());
+    }
 
     public Task<AppSettings> GetSettingsAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(new AppSettings

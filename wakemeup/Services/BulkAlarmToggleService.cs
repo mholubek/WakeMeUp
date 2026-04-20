@@ -12,6 +12,14 @@ public sealed class BulkAlarmToggleService(
         CancellationToken cancellationToken = default)
     {
         var alarms = await store.GetAlarmsAsync(cancellationToken);
+        return await SetAllAlarmsEnabledAsync(alarms, isEnabled, cancellationToken);
+    }
+
+    public async Task<BulkAlarmToggleResult> SetAllAlarmsEnabledAsync(
+        IEnumerable<AlarmDefinition> alarms,
+        bool isEnabled,
+        CancellationToken cancellationToken = default)
+    {
         var alarmsToUpdate = alarms
             .Where(alarm => alarm.IsEnabled != isEnabled)
             .Select(alarm => alarmMutations.ApplyEnabledState(alarm, isEnabled))
@@ -19,7 +27,7 @@ public sealed class BulkAlarmToggleService(
 
         if (alarmsToUpdate.Count == 0)
         {
-            return new BulkAlarmToggleResult(0);
+            return new BulkAlarmToggleResult(0, []);
         }
 
         await store.SaveAlarmsAsync(alarmsToUpdate, cancellationToken);
@@ -35,7 +43,7 @@ public sealed class BulkAlarmToggleService(
                 updatedAlarm.IsEnabled);
         }
 
-        return new BulkAlarmToggleResult(alarmsToUpdate.Count);
+        return new BulkAlarmToggleResult(alarmsToUpdate.Count, alarmsToUpdate);
     }
 
     private static string GetLogDescription(string? description)
@@ -49,4 +57,4 @@ public sealed class BulkAlarmToggleService(
     }
 }
 
-public sealed record BulkAlarmToggleResult(int UpdatedCount);
+public sealed record BulkAlarmToggleResult(int UpdatedCount, IReadOnlyList<AlarmDefinition> UpdatedAlarms);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3
+
+- Reduced the latency of the add-on bulk enable and disable actions by avoiding an unnecessary alarm reload after the batch SQLite save
+- Updated the overview page to refresh the local alarm list immediately after bulk enable and disable actions
+- Added test coverage for the optimized bulk toggle flow
+
 ## 0.2.2
 
 - Moved the add-on bulk enable and disable flow into a dedicated `BulkAlarmToggleService` while keeping the existing UI behavior

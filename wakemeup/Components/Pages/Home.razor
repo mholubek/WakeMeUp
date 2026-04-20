@@ -271,7 +271,7 @@
     {
         try
         {
-            var result = await BulkAlarmToggleService.SetAllAlarmsEnabledAsync(isEnabled);
+            var result = await BulkAlarmToggleService.SetAllAlarmsEnabledAsync(alarms, isEnabled);
             if (result.UpdatedCount == 0)
             {
                 ShowStatusMessage(
@@ -280,7 +280,13 @@
                 return;
             }
 
-            await LoadAsync();
+            var updatedById = result.UpdatedAlarms.ToDictionary(alarm => alarm.Id);
+            alarms = alarms
+                .Select(alarm => updatedById.TryGetValue(alarm.Id, out var updatedAlarm) ? updatedAlarm : alarm)
+                .OrderBy(alarm => alarm.Time)
+                .ToList();
+            AppState.Alarms = alarms;
+            StateHasChanged();
             ShowStatusMessage(
                 isEnabled ? Texts["AllAlarmsEnabled"] : Texts["AllAlarmsDisabled"],
                 false);
