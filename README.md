@@ -56,7 +56,7 @@ WakeMeUp currently includes these UI languages:
 - Esperanto
 - Klingon
 
-The selected language is stored in the add-on database and is also exposed through the JSON API for future external clients such as a custom HACS card.
+The selected language is stored in the add-on database and is also exposed through the JSON API for future external clients.
 
 ## Event
 
@@ -105,7 +105,7 @@ To add it manually in Home Assistant:
 
 ## JSON API
 
-WakeMeUp already exposes a JSON API intended for future clients such as a custom HACS card.
+WakeMeUp already exposes a JSON API intended for future clients.
 
 Available endpoints:
 

@@ -1,0 +1,21 @@
+import "./wakemeup-card";
+import "./wakemeup-card-editor";
+
+declare global {
+  interface Window {
+    customCards?: Array<{
+      type: string;
+      name: string;
+      description: string;
+      preview: boolean;
+    }>;
+  }
+}
+
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "wakemeup-card",
+  name: "WakeMeUp Card",
+  description: "Bubble-inspired card for managing WakeMeUp alarms.",
+  preview: true,
+});
