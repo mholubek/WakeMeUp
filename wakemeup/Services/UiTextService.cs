@@ -390,6 +390,141 @@ public sealed class UiTextService
             }
         };
 
+    private static readonly IReadOnlyDictionary<AppLanguage, IReadOnlyDictionary<string, string>> AdditionalTranslations =
+        new Dictionary<AppLanguage, IReadOnlyDictionary<string, string>>
+        {
+            [AppLanguage.English] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Enable all alarms",
+                ["DisableAllAlarms"] = "Disable all alarms",
+                ["AllAlarmsEnabled"] = "All alarms enabled.",
+                ["AllAlarmsDisabled"] = "All alarms disabled.",
+                ["AllAlarmsAlreadyEnabled"] = "All alarms are already enabled.",
+                ["AllAlarmsAlreadyDisabled"] = "All alarms are already disabled.",
+                ["UnableUpdateAlarms"] = "Unable to update the alarms.",
+            },
+            [AppLanguage.German] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Alle Alarme aktivieren",
+                ["DisableAllAlarms"] = "Alle Alarme deaktivieren",
+                ["AllAlarmsEnabled"] = "Alle Alarme aktiviert.",
+                ["AllAlarmsDisabled"] = "Alle Alarme deaktiviert.",
+                ["AllAlarmsAlreadyEnabled"] = "Alle Alarme sind bereits aktiviert.",
+                ["AllAlarmsAlreadyDisabled"] = "Alle Alarme sind bereits deaktiviert.",
+                ["UnableUpdateAlarms"] = "Alarme konnten nicht aktualisiert werden.",
+            },
+            [AppLanguage.French] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Activer toutes les alarmes",
+                ["DisableAllAlarms"] = "Désactiver toutes les alarmes",
+                ["AllAlarmsEnabled"] = "Toutes les alarmes activées.",
+                ["AllAlarmsDisabled"] = "Toutes les alarmes désactivées.",
+                ["AllAlarmsAlreadyEnabled"] = "Toutes les alarmes sont déjà activées.",
+                ["AllAlarmsAlreadyDisabled"] = "Toutes les alarmes sont déjà désactivées.",
+                ["UnableUpdateAlarms"] = "Impossible de mettre à jour les alarmes.",
+            },
+            [AppLanguage.Spanish] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Activar todas las alarmas",
+                ["DisableAllAlarms"] = "Desactivar todas las alarmas",
+                ["AllAlarmsEnabled"] = "Todas las alarmas activadas.",
+                ["AllAlarmsDisabled"] = "Todas las alarmas desactivadas.",
+                ["AllAlarmsAlreadyEnabled"] = "Todas las alarmas ya están activadas.",
+                ["AllAlarmsAlreadyDisabled"] = "Todas las alarmas ya están desactivadas.",
+                ["UnableUpdateAlarms"] = "No se pudieron actualizar las alarmas.",
+            },
+            [AppLanguage.Portuguese] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Ativar todos os alarmes",
+                ["DisableAllAlarms"] = "Desativar todos os alarmes",
+                ["AllAlarmsEnabled"] = "Todos os alarmes ativados.",
+                ["AllAlarmsDisabled"] = "Todos os alarmes desativados.",
+                ["AllAlarmsAlreadyEnabled"] = "Todos os alarmes já estão ativados.",
+                ["AllAlarmsAlreadyDisabled"] = "Todos os alarmes já estão desativados.",
+                ["UnableUpdateAlarms"] = "Não foi possível atualizar os alarmes.",
+            },
+            [AppLanguage.Italian] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Attiva tutti gli allarmi",
+                ["DisableAllAlarms"] = "Disattiva tutti gli allarmi",
+                ["AllAlarmsEnabled"] = "Tutti gli allarmi attivati.",
+                ["AllAlarmsDisabled"] = "Tutti gli allarmi disattivati.",
+                ["AllAlarmsAlreadyEnabled"] = "Tutti gli allarmi sono già attivati.",
+                ["AllAlarmsAlreadyDisabled"] = "Tutti gli allarmi sono già disattivati.",
+                ["UnableUpdateAlarms"] = "Impossibile aggiornare gli allarmi.",
+            },
+            [AppLanguage.Slovak] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Zapnúť všetky budíky",
+                ["DisableAllAlarms"] = "Vypnúť všetky budíky",
+                ["AllAlarmsEnabled"] = "Všetky budíky boli zapnuté.",
+                ["AllAlarmsDisabled"] = "Všetky budíky boli vypnuté.",
+                ["AllAlarmsAlreadyEnabled"] = "Všetky budíky už sú zapnuté.",
+                ["AllAlarmsAlreadyDisabled"] = "Všetky budíky už sú vypnuté.",
+                ["UnableUpdateAlarms"] = "Nepodarilo sa aktualizovať budíky.",
+            },
+            [AppLanguage.Czech] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Zapnout všechny budíky",
+                ["DisableAllAlarms"] = "Vypnout všechny budíky",
+                ["AllAlarmsEnabled"] = "Všechny budíky byly zapnuty.",
+                ["AllAlarmsDisabled"] = "Všechny budíky byly vypnuty.",
+                ["AllAlarmsAlreadyEnabled"] = "Všechny budíky už jsou zapnuté.",
+                ["AllAlarmsAlreadyDisabled"] = "Všechny budíky už jsou vypnuté.",
+                ["UnableUpdateAlarms"] = "Nepodařilo se aktualizovat budíky.",
+            },
+            [AppLanguage.Polish] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Włącz wszystkie alarmy",
+                ["DisableAllAlarms"] = "Wyłącz wszystkie alarmy",
+                ["AllAlarmsEnabled"] = "Wszystkie alarmy włączone.",
+                ["AllAlarmsDisabled"] = "Wszystkie alarmy wyłączone.",
+                ["AllAlarmsAlreadyEnabled"] = "Wszystkie alarmy są już włączone.",
+                ["AllAlarmsAlreadyDisabled"] = "Wszystkie alarmy są już wyłączone.",
+                ["UnableUpdateAlarms"] = "Nie udało się zaktualizować alarmów.",
+            },
+            [AppLanguage.Ukrainian] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Увімкнути всі будильники",
+                ["DisableAllAlarms"] = "Вимкнути всі будильники",
+                ["AllAlarmsEnabled"] = "Усі будильники увімкнено.",
+                ["AllAlarmsDisabled"] = "Усі будильники вимкнено.",
+                ["AllAlarmsAlreadyEnabled"] = "Усі будильники вже увімкнені.",
+                ["AllAlarmsAlreadyDisabled"] = "Усі будильники вже вимкнені.",
+                ["UnableUpdateAlarms"] = "Не вдалося оновити будильники.",
+            },
+            [AppLanguage.Greek] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Ενεργοποίηση όλων των ξυπνητηριών",
+                ["DisableAllAlarms"] = "Απενεργοποίηση όλων των ξυπνητηριών",
+                ["AllAlarmsEnabled"] = "Όλα τα ξυπνητήρια ενεργοποιήθηκαν.",
+                ["AllAlarmsDisabled"] = "Όλα τα ξυπνητήρια απενεργοποιήθηκαν.",
+                ["AllAlarmsAlreadyEnabled"] = "Όλα τα ξυπνητήρια είναι ήδη ενεργοποιημένα.",
+                ["AllAlarmsAlreadyDisabled"] = "Όλα τα ξυπνητήρια είναι ήδη απενεργοποιημένα.",
+                ["UnableUpdateAlarms"] = "Δεν ήταν δυνατή η ενημέρωση των ξυπνητηριών.",
+            },
+            [AppLanguage.Esperanto] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "Enŝalti ĉiujn alarmojn",
+                ["DisableAllAlarms"] = "Malŝalti ĉiujn alarmojn",
+                ["AllAlarmsEnabled"] = "Ĉiuj alarmoj enŝaltitaj.",
+                ["AllAlarmsDisabled"] = "Ĉiuj alarmoj malŝaltitaj.",
+                ["AllAlarmsAlreadyEnabled"] = "Ĉiuj alarmoj jam estas enŝaltitaj.",
+                ["AllAlarmsAlreadyDisabled"] = "Ĉiuj alarmoj jam estas malŝaltitaj.",
+                ["UnableUpdateAlarms"] = "Ne eblis ĝisdatigi la alarmojn.",
+            },
+            [AppLanguage.Klingon] = new Dictionary<string, string>
+            {
+                ["EnableAllAlarms"] = "QInmey Hoch yIchu'",
+                ["DisableAllAlarms"] = "QInmey Hoch yIchu'Ha'",
+                ["AllAlarmsEnabled"] = "QInmey Hoch chu'ta'.",
+                ["AllAlarmsDisabled"] = "QInmey Hoch chu'Ha'ta'.",
+                ["AllAlarmsAlreadyEnabled"] = "QInmey Hoch chu'taH.",
+                ["AllAlarmsAlreadyDisabled"] = "QInmey Hoch chu'Ha'taH.",
+                ["UnableUpdateAlarms"] = "QInmey Hoch choHlaHbe'.",
+            },
+        };
+
     public event Action? Changed;
 
     public AppLanguage CurrentLanguage { get; private set; } = AppLanguage.English;
@@ -414,9 +549,20 @@ public sealed class UiTextService
             return value;
         }
 
+        if (AdditionalTranslations.TryGetValue(CurrentLanguage, out var additionalLanguageMap) &&
+            additionalLanguageMap.TryGetValue(key, out var additionalValue))
+        {
+            return additionalValue;
+        }
+
         if (Translations[AppLanguage.English].TryGetValue(key, out var fallback))
         {
             return fallback;
+        }
+
+        if (AdditionalTranslations[AppLanguage.English].TryGetValue(key, out var additionalFallback))
+        {
+            return additionalFallback;
         }
 
         return key;

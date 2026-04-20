@@ -5,6 +5,7 @@
 @inject ILogger<Home> Logger
 @inject UiTextService Texts
 @inject AlarmMutationService AlarmMutations
+@inject BulkAlarmToggleService BulkAlarmToggleService
 @inject WakeMeUp.Domain.AppState AppState
 
 <PageTitle>@Texts["PageTitleHome"]</PageTitle>
@@ -268,42 +269,18 @@
 
     private async Task HandleBulkAlarmToggleAsync(bool isEnabled)
     {
-        var alarmsToUpdate = alarms
-            .Where(alarm => alarm.IsEnabled != isEnabled)
-            .ToList();
-
-        if (alarmsToUpdate.Count == 0)
-        {
-            ShowStatusMessage(
-                isEnabled ? Texts["AllAlarmsAlreadyEnabled"] : Texts["AllAlarmsAlreadyDisabled"],
-                false);
-            return;
-        }
-
         try
         {
-            var updatedAlarms = new List<AlarmDefinition>(alarmsToUpdate.Count);
-
-            foreach (var alarm in alarmsToUpdate)
+            var result = await BulkAlarmToggleService.SetAllAlarmsEnabledAsync(isEnabled);
+            if (result.UpdatedCount == 0)
             {
-                var updatedAlarm = AlarmMutations.ApplyEnabledState(alarm, isEnabled);
-                updatedAlarms.Add(updatedAlarm);
-                ReplaceAlarmInList(updatedAlarm);
+                ShowStatusMessage(
+                    isEnabled ? Texts["AllAlarmsAlreadyEnabled"] : Texts["AllAlarmsAlreadyDisabled"],
+                    false);
+                return;
             }
 
-            await Store.SaveAlarmsAsync(updatedAlarms);
-
-            foreach (var updatedAlarm in updatedAlarms)
-            {
-                Logger.LogInformation(
-                    "[{LoggedAt}] Alarm updated: Name='{AlarmName}', Time='{AlarmTime}', Description='{AlarmDescription}', Enabled={IsEnabled}",
-                    GetLogTimestamp(),
-                    updatedAlarm.Name,
-                    updatedAlarm.Time.ToString("HH\\:mm"),
-                    GetLogDescription(updatedAlarm.Description),
-                    updatedAlarm.IsEnabled);
-            }
-
+            await LoadAsync();
             ShowStatusMessage(
                 isEnabled ? Texts["AllAlarmsEnabled"] : Texts["AllAlarmsDisabled"],
                 false);

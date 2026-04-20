@@ -23,6 +23,7 @@ async def async_setup_entry(
 class WakeMeUpAlarmTriggeredBinarySensor(WakeMeUpBridgeEntity, BinarySensorEntity):
     _attr_name = "Alarm triggered"
     _attr_icon = "mdi:alarm-light"
+    _attr_entity_registry_enabled_default = True
 
     def __init__(self, entry: ConfigEntry, runtime: WakeMeUpRuntime) -> None:
         super().__init__(entry)

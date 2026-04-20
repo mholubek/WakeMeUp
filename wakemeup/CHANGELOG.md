@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Moved the add-on bulk enable and disable flow into a dedicated `BulkAlarmToggleService` while keeping the existing UI behavior
+- Added localized app UI strings for bulk enable and disable actions across all supported WakeMeUp languages
+- Fixed WakeMeUp Bridge helper entity names to stay permanently in English
+- Added Python unit tests for the WakeMeUp Bridge bulk endpoint and helper entities
+
 ## 0.2.1
 
 - Added bulk enable and disable actions directly in the add-on UI sidebar

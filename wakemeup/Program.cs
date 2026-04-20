@@ -17,6 +17,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UiTextService>();
 builder.Services.AddScoped<AppState>();
+builder.Services.AddScoped<BulkAlarmToggleService>();
 builder.Services.AddSingleton<AlarmMutationService>();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionDirectory))

@@ -27,6 +27,7 @@ async def async_setup_entry(
 
 class WakeMeUpBulkAlarmButton(WakeMeUpBridgeEntity, ButtonEntity):
     _attr_entity_category = EntityCategory.CONFIG
+    _attr_entity_registry_enabled_default = True
 
     def __init__(
         self,
