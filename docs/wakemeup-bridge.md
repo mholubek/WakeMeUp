@@ -5,6 +5,8 @@
 Its purpose is to expose stable Home Assistant API endpoints for a Lovelace card so the frontend does not need to know or configure the add-on ingress URL.
 It also exposes helper entities for automations and bulk alarm control.
 
+[![Open your Home Assistant instance and start the WakeMeUp Bridge setup flow](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start?domain=wakemeup_bridge)
+
 ## What it does
 
 The bridge registers authenticated Home Assistant endpoints under:
@@ -21,14 +23,15 @@ The bridge registers authenticated Home Assistant endpoints under:
 It also creates these Home Assistant entities:
 
 - `binary_sensor.wakemeup_bridge_alarm_triggered`
-- `button.wakemeup_bridge_enable_all_alarms`
-- `button.wakemeup_bridge_disable_all_alarms`
+- `button.enable_all_alarms`
+- `button.disable_all_alarms`
 
 Internally, the bridge:
 
 1. Uses the Supervisor API to resolve the installed WakeMeUp add-on repository identifier and hostname.
-2. Calls the existing WakeMeUp add-on API over the internal Home Assistant network.
-3. Returns the same JSON payloads to the Lovelace card.
+2. Detects the add-on slug automatically.
+3. Calls the existing WakeMeUp add-on API over the internal Home Assistant network.
+4. Returns the same JSON payloads to the Lovelace card.
 
 The card only needs to call `/api/wakemeup/...` on the Home Assistant origin.
 
@@ -45,6 +48,7 @@ The card only needs to call `/api/wakemeup/...` on the Home Assistant origin.
 
 After that, the Home Assistant backend will expose the stable `/api/wakemeup/...` routes for the card.
 The binary sensor turns on for 30 seconds after the add-on emits `wakemeup_alarm_triggered`, which makes it easier to build state-based automations.
+Entity names intentionally stay fixed in English. Frontend localization should be handled by the Lovelace or HACS component.
 
 ## Minimal Lovelace Card Migration
 

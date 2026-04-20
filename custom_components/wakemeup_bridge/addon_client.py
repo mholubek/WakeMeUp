@@ -13,10 +13,11 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     ADDON_API_PREFIX,
+    ADDON_NAME,
     ADDON_PORT,
-    ADDON_SLUG,
     REQUEST_TIMEOUT_SECONDS,
-    SUPERVISOR_ADDON_INFO_ENDPOINT,
+    SUPERVISOR_ADDONS_ENDPOINT,
+    SUPERVISOR_ADDON_INFO_ENDPOINT_TEMPLATE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,6 +49,10 @@ class WakeMeUpAddonInfo:
 class WakeMeUpBridgeError(Exception):
     """Raised when the bridge cannot reach the WakeMeUp add-on."""
 
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.details = details or {}
+
 
 @dataclass(slots=True)
 class WakeMeUpProxyResponse:
@@ -63,6 +68,20 @@ class WakeMeUpAddonClient:
         self._supervisor_token = os.environ.get("SUPERVISOR_TOKEN")
         self._addon_info: WakeMeUpAddonInfo | None = None
         self._lock = asyncio.Lock()
+        self._last_debug: dict[str, Any] = {}
+
+    async def async_get_debug_info(self) -> dict[str, Any]:
+        addon_info = self._addon_info
+        return {
+            "cached_addon_info": {
+                "slug": addon_info.slug,
+                "repository": addon_info.repository,
+                "hostname": addon_info.hostname,
+                "ingress_port": addon_info.ingress_port,
+                "api_base_url": addon_info.api_base_url,
+            } if addon_info is not None else None,
+            "last_debug": self._last_debug,
+        }
 
     async def proxy_json_request(
         self,
@@ -76,9 +95,8 @@ class WakeMeUpAddonClient:
                 "SUPERVISOR_TOKEN is not available. This bridge requires Home Assistant Supervisor."
             )
 
-        addon_info = await self._async_get_addon_info()
-
         try:
+            addon_info = await self._async_get_addon_info()
             return await self._async_request(addon_info, method, path, json_body=json_body)
         except ClientConnectionError:
             addon_info = await self._async_get_addon_info(force_refresh=True)
@@ -86,6 +104,10 @@ class WakeMeUpAddonClient:
         except asyncio.TimeoutError as err:
             raise WakeMeUpBridgeError("WakeMeUp add-on request timed out.") from err
         except ClientError as err:
+            raise WakeMeUpBridgeError("WakeMeUp add-on request failed.") from err
+        except WakeMeUpBridgeError:
+            raise
+        except Exception as err:
             raise WakeMeUpBridgeError("WakeMeUp add-on request failed.") from err
 
     async def async_get_alarms(self) -> list[dict[str, Any]]:
@@ -135,6 +157,15 @@ class WakeMeUpAddonClient:
         json_body: Any | None = None,
     ) -> WakeMeUpProxyResponse:
         url = f"{addon_info.api_base_url}{path}"
+        self._last_debug = {
+            "slug": addon_info.slug,
+            "repository": addon_info.repository,
+            "hostname": addon_info.hostname,
+            "ingress_port": addon_info.ingress_port,
+            "api_base_url": addon_info.api_base_url,
+            "last_request_url": url,
+            "last_request_method": method,
+        }
         _LOGGER.debug("Proxying WakeMeUp request to %s %s", method, url)
         async with self._session.request(
             method,
@@ -158,7 +189,8 @@ class WakeMeUpAddonClient:
 
         details = self._extract_error_message(response)
         raise WakeMeUpBridgeError(
-            f"WakeMeUp add-on returned HTTP {response.status} while {action}{details}."
+            f"WakeMeUp add-on returned HTTP {response.status} while {action}{details}.",
+            details=self._last_debug,
         )
 
     def _decode_json_response(self, response: WakeMeUpProxyResponse) -> Any:
@@ -188,41 +220,116 @@ class WakeMeUpAddonClient:
                 return self._addon_info
 
             headers = {"Authorization": f"Bearer {self._supervisor_token}"}
-            async with self._session.get(SUPERVISOR_ADDON_INFO_ENDPOINT, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS) as response:
-                response.raise_for_status()
-                payload = await response.json()
-
-            addon = payload.get("data")
-            if not addon:
-                raise WakeMeUpBridgeError(
-                    "WakeMeUp add-on details could not be loaded from Supervisor."
-                )
-
-            if not addon.get("installed"):
-                raise WakeMeUpBridgeError("WakeMeUp add-on is not installed.")
-
-            if addon.get("state") != "started":
-                raise WakeMeUpBridgeError("WakeMeUp add-on is not started.")
-
-            hostname = addon.get("hostname")
-            repository = addon.get("repository")
-            ingress_port = addon.get("ingress_port")
-
-            if not hostname and not repository:
-                raise WakeMeUpBridgeError(
-                    "WakeMeUp add-on hostname could not be resolved from Supervisor."
-                )
-
-            self._addon_info = WakeMeUpAddonInfo(
-                slug=ADDON_SLUG,
-                repository=repository,
-                hostname=hostname,
-                ingress_port=ingress_port,
-            )
-            _LOGGER.debug(
-                "Resolved WakeMeUp add-on upstream hostname=%s ingress_port=%s repository=%s",
-                hostname,
-                ingress_port,
-                repository,
-            )
+            addon = await self._async_load_addon_details(headers)
+            self._addon_info = self._build_addon_info(addon)
             return self._addon_info
+
+    async def _async_load_addon_details(self, headers: dict[str, str]) -> dict[str, Any]:
+        addon_stub = await self._async_find_addon(headers)
+        addon_slug = str(addon_stub.get("slug") or "")
+        if not addon_slug:
+            raise WakeMeUpBridgeError("WakeMeUp add-on slug could not be resolved from Supervisor.")
+
+        try:
+            async with self._session.get(
+                SUPERVISOR_ADDON_INFO_ENDPOINT_TEMPLATE.format(addon_slug=addon_slug),
+                headers=headers,
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            ) as response:
+                response.raise_for_status()
+                payload = self._unwrap_supervisor_payload(await response.json())
+        except ClientError as err:
+            _LOGGER.debug("Falling back to Supervisor add-ons list lookup after direct info lookup failed: %s", err)
+            self._last_debug = {
+                "resolved_addon_slug": addon_slug,
+                "supervisor_info_endpoint": SUPERVISOR_ADDON_INFO_ENDPOINT_TEMPLATE.format(addon_slug=addon_slug),
+                "fallback": "addons_list",
+            }
+            return addon_stub
+
+        if not isinstance(payload, dict):
+            raise WakeMeUpBridgeError("WakeMeUp add-on details could not be loaded from Supervisor.")
+
+        self._last_debug = {
+            "resolved_addon_slug": addon_slug,
+            "supervisor_info_endpoint": SUPERVISOR_ADDON_INFO_ENDPOINT_TEMPLATE.format(addon_slug=addon_slug),
+            "fallback": None,
+        }
+        return payload
+
+    async def _async_find_addon(self, headers: dict[str, str]) -> dict[str, Any]:
+        async with self._session.get(
+            SUPERVISOR_ADDONS_ENDPOINT,
+            headers=headers,
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        ) as response:
+            response.raise_for_status()
+            payload = self._unwrap_supervisor_payload(await response.json())
+
+        addons = payload.get("addons")
+        if not isinstance(addons, list):
+            raise WakeMeUpBridgeError("WakeMeUp add-on details could not be loaded from Supervisor.")
+
+        addon = next(
+            (
+                item
+                for item in addons
+                if isinstance(item, dict)
+                and (
+                    item.get("name") == ADDON_NAME
+                    or str(item.get("slug") or "").endswith("_wakemeup")
+                    or str(item.get("slug") or "") == "wakemeup"
+                )
+            ),
+            None,
+        )
+        if addon is None:
+            raise WakeMeUpBridgeError("WakeMeUp add-on was not found in Supervisor.")
+
+        return addon
+
+    def _unwrap_supervisor_payload(self, payload: Any) -> dict[str, Any]:
+        if not isinstance(payload, dict):
+            return {}
+
+        data = payload.get("data")
+        if isinstance(data, dict):
+            return data
+
+        return payload
+
+    def _build_addon_info(self, addon: dict[str, Any]) -> WakeMeUpAddonInfo:
+        if not addon.get("installed", True):
+            raise WakeMeUpBridgeError("WakeMeUp add-on is not installed.")
+
+        if addon.get("state") and addon.get("state") != "started":
+            raise WakeMeUpBridgeError("WakeMeUp add-on is not started.")
+
+        hostname = addon.get("hostname")
+        repository = addon.get("repository")
+        ingress_port = addon.get("ingress_port")
+
+        if not hostname and not repository:
+            raise WakeMeUpBridgeError(
+                "WakeMeUp add-on hostname could not be resolved from Supervisor.",
+                details={
+                    "slug": addon.get("slug"),
+                    "repository": repository,
+                    "hostname": hostname,
+                    "ingress_port": ingress_port,
+                },
+            )
+
+        _LOGGER.debug(
+            "Resolved WakeMeUp add-on upstream hostname=%s ingress_port=%s repository=%s",
+            hostname,
+            ingress_port,
+            repository,
+        )
+
+        return WakeMeUpAddonInfo(
+            slug=str(addon.get("slug") or "wakemeup"),
+            repository=repository,
+            hostname=hostname,
+            ingress_port=ingress_port,
+        )

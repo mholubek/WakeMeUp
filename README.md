@@ -161,6 +161,8 @@ This repository also includes an optional companion Home Assistant custom integr
 
 - [custom_components/wakemeup_bridge](./custom_components/wakemeup_bridge)
 
+[![Open your Home Assistant instance and start the WakeMeUp Bridge setup flow](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start?domain=wakemeup_bridge)
+
 The bridge exposes stable authenticated Home Assistant endpoints:
 
 - `GET /api/wakemeup/meta`
@@ -173,13 +175,24 @@ The bridge exposes stable authenticated Home Assistant endpoints:
 - `PATCH /api/wakemeup/alarms/{id}/enabled`
 
 This lets a Lovelace card call WakeMeUp through the normal Home Assistant frontend origin without knowing the add-on ingress URL.
+The bridge auto-detects the installed WakeMeUp add-on through Supervisor, resolves its internal hostname automatically, and proxies requests to the add-on API.
+
 The bridge also exposes helper entities in Home Assistant:
 
 - `binary_sensor.wakemeup_bridge_alarm_triggered` turns on for 30 seconds when an alarm fires and includes the last alarm details in its attributes
-- `button.wakemeup_bridge_enable_all_alarms`
-- `button.wakemeup_bridge_disable_all_alarms`
+- `button.enable_all_alarms`
+- `button.disable_all_alarms`
 
-See [docs/wakemeup-bridge.md](./docs/wakemeup-bridge.md) for installation and the minimal frontend migration steps.
+Entity names stay fixed in English by design so frontend and HACS components can localize their own UI independently.
+
+Installation summary:
+
+1. Copy [custom_components/wakemeup_bridge](./custom_components/wakemeup_bridge) into your Home Assistant `config/custom_components` directory.
+2. Restart Home Assistant.
+3. Add the `WakeMeUp Bridge` integration from `Settings > Devices & Services`.
+4. Ensure the WakeMeUp add-on is installed and running.
+
+See [custom_components/wakemeup_bridge/README.md](./custom_components/wakemeup_bridge/README.md) and [docs/wakemeup-bridge.md](./docs/wakemeup-bridge.md) for installation details and the minimal frontend migration steps.
 
 ## Add-on Folder
 

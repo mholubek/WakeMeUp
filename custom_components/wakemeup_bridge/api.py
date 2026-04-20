@@ -17,6 +17,7 @@ def async_register_views(hass: HomeAssistant) -> None:
     hass.http.register_view(WakeMeUpAlarmsEnabledView(hass))
     hass.http.register_view(WakeMeUpAlarmDetailView(hass))
     hass.http.register_view(WakeMeUpAlarmEnabledView(hass))
+    hass.http.register_view(WakeMeUpDebugUpstreamView(hass))
 
 
 class WakeMeUpBaseView(HomeAssistantView):
@@ -53,7 +54,7 @@ class WakeMeUpBaseView(HomeAssistantView):
             return self.json(
                 {
                     "error": str(err),
-                    "details": [],
+                    "details": [err.details] if getattr(err, "details", None) else [],
                 },
                 status_code=502,
             )
@@ -151,6 +152,14 @@ class WakeMeUpAlarmEnabledView(WakeMeUpBaseView):
 
     async def patch(self, request: Request, alarm_id: str) -> Response:
         return await self._proxy("PATCH", f"/alarms/{alarm_id}/enabled", request)
+
+
+class WakeMeUpDebugUpstreamView(WakeMeUpBaseView):
+    url = f"{API_BASE_PATH}/debug/upstream"
+    name = "api:wake_me_up:debug_upstream"
+
+    async def get(self, request: Request) -> Response:
+        return self.json(await self._client.async_get_debug_info())
 
 
 def _to_response(proxy_response: WakeMeUpProxyResponse) -> Response:

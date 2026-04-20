@@ -78,6 +78,7 @@ def _install_homeassistant_stubs() -> None:
 _install_homeassistant_stubs()
 
 from custom_components.wakemeup_bridge.api import WakeMeUpAlarmsEnabledView
+from custom_components.wakemeup_bridge.addon_client import WakeMeUpAddonClient, WakeMeUpBridgeError
 from custom_components.wakemeup_bridge.const import DATA_ADDON_CLIENT, DOMAIN
 
 
@@ -138,6 +139,61 @@ class WakeMeUpBridgeApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(response.status, 200)
         self.assertEqual(response.content_type, "application/json")
+
+    async def test_addon_client_builds_info_from_direct_supervisor_payload(self) -> None:
+        client = WakeMeUpAddonClient(SimpleNamespace())
+
+        addon_info = client._build_addon_info(
+            {
+                "slug": "wakemeup",
+                "name": "WakeMeUp",
+                "installed": True,
+                "state": "started",
+                "hostname": "local-wakemeup",
+                "repository": "local",
+                "ingress_port": 8080,
+            }
+        )
+
+        self.assertEqual(addon_info.hostname, "local-wakemeup")
+        self.assertEqual(addon_info.repository, "local")
+        self.assertEqual(addon_info.ingress_port, 8080)
+
+    async def test_addon_client_raises_controlled_error_for_missing_addon(self) -> None:
+        client = WakeMeUpAddonClient(SimpleNamespace())
+
+        with self.assertRaises(WakeMeUpBridgeError):
+            client._build_addon_info(
+                {
+                    "slug": "wakemeup",
+                    "name": "WakeMeUp",
+                    "installed": True,
+                    "state": "started",
+                    "hostname": None,
+                    "repository": None,
+                    "ingress_port": None,
+                }
+            )
+
+    async def test_addon_client_unwraps_supervisor_data_payload(self) -> None:
+        client = WakeMeUpAddonClient(SimpleNamespace())
+
+        unwrapped = client._unwrap_supervisor_payload(
+            {
+                "result": "ok",
+                "data": {
+                    "addons": [
+                        {
+                            "slug": "local_wakemeup",
+                            "name": "WakeMeUp",
+                        }
+                    ]
+                },
+            }
+        )
+
+        self.assertIn("addons", unwrapped)
+        self.assertEqual(unwrapped["addons"][0]["slug"], "local_wakemeup")
 
 
 if __name__ == "__main__":
