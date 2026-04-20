@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="wakemeup/WakeMeUp.csproj" />
+  <Project Path="WakeMeUp.Tests/WakeMeUp.Tests.csproj" />
 </Solution>
