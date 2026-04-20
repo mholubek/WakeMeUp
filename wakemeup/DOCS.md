@@ -52,95 +52,11 @@ Event payload includes:
 - `time`
 - `description`
 
-If an alarm has no description, WakeMeUp sends an empty string.
-
-## Storage
-
-In Home Assistant add-on mode, SQLite data is stored in:
-
-`/data/wakemeup.db`
-
-This location is persistent across add-on restarts and updates.
-
-ASP.NET Data Protection keys are persisted under:
-
-`/data/.aspnet/DataProtection-Keys`
-
 ## Configuration
 
 This add-on currently does not expose user-configurable add-on options in `config.yaml`.
 
 Home Assistant API access is handled through the Supervisor environment and the internal Home Assistant endpoint.
-
-## JSON API
-
-WakeMeUp exposes a JSON API intended for future clients such as a custom HACS card.
-
-Available endpoints:
-
-- `GET /api/v1/alarms`
-- `GET /api/v1/alarms/{id}`
-- `POST /api/v1/alarms`
-- `PUT /api/v1/alarms/{id}`
-- `PATCH /api/v1/alarms/{id}/enabled`
-- `DELETE /api/v1/alarms/{id}`
-- `GET /api/v1/meta`
-- `GET /health`
-
-Alarm responses include:
-
-- `id`
-- `name`
-- `description`
-- `time`
-- `isEnabled`
-- `repeatMode`
-- `days`
-- `nextTriggerLocal`
-- `createdUtc`
-- `lastTriggeredUtc`
-- `lastResultMessage`
-
-Metadata responses include:
-
-- `timeZoneId`
-- `timeZoneDisplayName`
-- `currentLanguage`
-- `currentTheme`
-- `currentLocalTime`
-- `supportedLanguages`
-- `repeatModes`
-- `weekdays`
-
-Validation failures return structured JSON error details.
-
-## HACS Card Preparation
-
-The backend is already prepared for a future custom HACS dashboard card.
-
-The expected model is:
-
-- the card runs inside the Home Assistant dashboard
-- the card can call WakeMeUp directly through ingress or through the optional `wakemeup_bridge` custom integration
-- the card uses the JSON API for alarm CRUD and enable/disable actions
-- the card reads the selected app language from `/api/v1/meta` or `/api/wakemeup/meta`
-- the card keeps its own localized UI strings
-
-## Optional WakeMeUp Bridge
-
-This repository also includes an optional Home Assistant custom integration named `wakemeup_bridge`.
-
-It exposes stable Home Assistant routes for the Lovelace card:
-
-- `GET /api/wakemeup/meta`
-- `GET /api/wakemeup/alarms`
-- `POST /api/wakemeup/alarms`
-- `GET /api/wakemeup/alarms/{id}`
-- `PUT /api/wakemeup/alarms/{id}`
-- `DELETE /api/wakemeup/alarms/{id}`
-- `PATCH /api/wakemeup/alarms/{id}/enabled`
-
-The bridge proxies these requests to the existing add-on API and keeps the same JSON payloads, so the frontend only needs minimal API base path changes.
 
 ## Notes
 
