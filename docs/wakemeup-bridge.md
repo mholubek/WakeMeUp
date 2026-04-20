@@ -1,5 +1,7 @@
 # WakeMeUp Bridge
 
+This integration is full vibe coded.
+
 `wakemeup_bridge` is a companion Home Assistant custom integration for the WakeMeUp add-on.
 
 Its purpose is to expose stable Home Assistant API endpoints for a Lovelace card so the frontend does not need to know or configure the add-on ingress URL.

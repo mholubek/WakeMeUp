@@ -1,5 +1,7 @@
 # WakeMeUp Bridge
 
+This integration is full vibe coded.
+
 `wakemeup_bridge` is the Home Assistant custom integration that connects the WakeMeUp add-on with Home Assistant dashboards, automations, and future HACS/Lovelace UI components.
 
 It gives WakeMeUp a stable Home Assistant-facing API and a small set of helper entities, so frontend code does not need to know the add-on ingress URL or implement its own add-on discovery.
